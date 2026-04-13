@@ -381,14 +381,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
       <div class="rc-left"><div class="rc-medal">🏅</div><div><div class="rc-rank" id="h-rank">—</div><div class="rc-sub">共 <span id="h-total">—</span> 位參賽者</div></div></div>
       <div class="rc-right"><div class="rc-stat" id="h-fat-diff">—</div><div class="rc-days" id="h-streak">—</div></div>
     </div>
-    <div class="sec-title" style="margin-top:14px;">今日進度</div>
-    <div class="today-card">
-      <div class="tc-head"><span class="tc-title">—</span><span class="tc-link" onclick="goTab('input',document.querySelectorAll('.btab')[1])">前往記錄 →</span></div>
-      <div class="bar-item"><span class="bar-icon">🥩</span><div class="bar-wrap"><div class="bar-fill" style="width:44%;background:#3ecf8e;" id="bfill-pro"></div></div><span class="bar-num" id="bnum-pro">22/50g</span></div>
-      <div class="bar-item"><span class="bar-icon">💧</span><div class="bar-wrap"><div class="bar-fill" style="width:50%;background:#3b82f6;" id="bfill-water"></div></div><span class="bar-num" id="bnum-water">1000/2000ml</span></div>
-      <div class="bar-item"><span class="bar-icon">🔥</span><div class="bar-wrap"><div class="bar-fill" style="width:75%;background:#f59e0b;" id="bfill-kcal"></div></div><span class="bar-num" id="bnum-kcal">900/1200</span></div>
-      <div class="bar-item" style="margin-bottom:0;"><span class="bar-icon">🏃</span><div class="bar-wrap"><div class="bar-fill" style="width:80%;background:#8b5cf6;" id="bfill-ex"></div></div><span class="bar-num" id="bnum-ex">24/30分</span></div>
-    </div>
   </div>
 
   <!-- INPUT -->
@@ -517,6 +509,76 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
     <div id="board-team" style="display:none;"><div class="board-body" id="board-team-body"><div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">比賽結束後顯示最終排名</div></div></div>
   </div>
 
+  <!-- ADMIN (只有管理員看得到) -->
+  <div class="screen hidden" id="screen-admin">
+    <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">管理後台</div>
+
+    <!-- 統計 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
+        <div style="font-size:26px;font-weight:700;color:var(--text);" id="adm-total">—</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">已報名</div>
+      </div>
+      <div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
+        <div style="font-size:26px;font-weight:700;color:#f59e0b;" id="adm-pending">—</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">待審核</div>
+      </div>
+    </div>
+
+    <!-- 待審核 -->
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">待審核學員</div>
+    <div id="adm-pending-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">載入中...</div>
+    </div>
+
+    <!-- 已通過學員 -->
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">已通過學員</div>
+    <div id="adm-approved-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">載入中...</div>
+    </div>
+
+    <!-- 分組管理 -->
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">分組管理</div>
+    <button onclick="openNewGroupAdm()" style="width:100%;padding:11px;background:var(--acc);color:var(--g1);border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px;">＋ 新增組別</button>
+    <div id="adm-groups-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">載入中...</div>
+    </div>
+
+    <!-- 官方量測 -->
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">官方量測輸入</div>
+    <div id="adm-official-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+      <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">載入中...</div>
+    </div>
+
+    <!-- 比賽設定 -->
+    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">比賽設定</div>
+    <div style="background:var(--bg);border-radius:14px;padding:14px;margin-bottom:8px;">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:700;">比賽名稱</div>
+      <input id="adm-s-name" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;color:var(--text);" placeholder="2026 春季曲線管理比賽">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
+      <div style="background:var(--bg);border-radius:14px;padding:12px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:700;">開賽日期</div>
+        <input id="adm-s-start" type="date" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit;color:var(--text);">
+      </div>
+      <div style="background:var(--bg);border-radius:14px;padding:12px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:700;">結賽日期</div>
+        <input id="adm-s-end" type="date" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit;color:var(--text);">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div style="background:var(--bg);border-radius:14px;padding:12px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:700;">每組最少人數</div>
+        <input id="adm-s-min" type="number" value="2" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit;color:var(--text);">
+      </div>
+      <div style="background:var(--bg);border-radius:14px;padding:12px;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:700;">每組最多人數</div>
+        <input id="adm-s-max" type="number" value="5" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit;color:var(--text);">
+      </div>
+    </div>
+    <button onclick="admSaveSettings()" style="width:100%;padding:13px;background:var(--acc);color:var(--g1);border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:24px;">儲存設定</button>
+  </div>
+
   <!-- BOTTOM TABS -->
   <div class="bottom-tabs">
     <div class="btab active" onclick="goTab('home',this)"><div class="btab-icon">🏠</div><div>首頁</div><div class="btab-dot"></div></div>
@@ -524,6 +586,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
     <div class="btab" onclick="goTab('measure',this)"><div class="btab-icon">📏</div><div>量測</div><div class="btab-dot"></div></div>
     <div class="btab" onclick="goTab('profile',this)"><div class="btab-icon">👤</div><div>個人</div><div class="btab-dot"></div></div>
     <div class="btab" onclick="goTab('rank',this)"><div class="btab-icon">🏆</div><div>排行榜</div><div class="btab-dot"></div></div>
+    <div class="btab" id="admin-tab" style="display:none;" onclick="goTab('admin',this)"><div class="btab-icon">⚙️</div><div>管理</div><div class="btab-dot"></div></div>
   </div>
 </div><!-- end app-view -->
 
@@ -583,6 +646,8 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh
 // ══════════════════════════════════════════════
 const SUPABASE_URL = 'https://prkgdwhwxdrmldgakzjq.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_d5pjEDl-T2mE_B86Aj5F8Q_pNzpUNcT';
+const ADMIN_EMAIL = 'binnu1025@gmail.com'; // ← 你的管理員 Gmail
+// ══════════════════════════════════════════════
 // ══════════════════════════════════════════════
 
 const { createClient } = supabase;
@@ -655,6 +720,11 @@ function showReg(){
 function showApp(){
   hide('login-view');hide('pending-view');hide('reg-view');
   show('app-view','flex');
+  // 管理員才顯示管理頁籤
+  if(currentUser && currentUser.email === ADMIN_EMAIL){
+    const admTab = document.getElementById('admin-tab');
+    if(admTab) admTab.style.display='flex';
+  }
   loadAppData();
 }
 
@@ -1112,6 +1182,8 @@ function goTab(name,el){
   document.querySelectorAll('.btab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
   document.getElementById('screen-'+name).classList.remove('hidden');
+  // 切到管理頁時載入資料
+  if(name==='admin') loadAdminData();
 }
 function setMeasTab(t,el){
   document.querySelectorAll('.mtab').forEach(b=>{b.className='mtab'+(b===el?' active':'');});
@@ -1126,6 +1198,283 @@ function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── ADMIN FUNCTIONS ──
+let admAllUsers=[], admAllGroups=[], admContestData=null;
+
+async function loadAdminData(){
+  await admLoadContest();
+  await admLoadUsers();
+  await admLoadGroups();
+  await admLoadOfficial();
+}
+
+async function admLoadContest(){
+  const {data}=await sb.from('contests').select('*').eq('is_active',true).single();
+  admContestData=data;
+  if(data){
+    const el=document.getElementById('adm-s-name');
+    if(el) el.value=data.name||'';
+    const s=document.getElementById('adm-s-start');
+    if(s) s.value=data.start_date||'';
+    const e=document.getElementById('adm-s-end');
+    if(e) e.value=data.end_date||'';
+    const mn=document.getElementById('adm-s-min');
+    if(mn) mn.value=data.team_min||2;
+    const mx=document.getElementById('adm-s-max');
+    if(mx) mx.value=data.team_max||5;
+  }
+}
+
+async function admLoadUsers(){
+  const {data}=await sb.from('users').select('*,groups(name,emoji)').order('created_at',{ascending:false});
+  admAllUsers=data||[];
+  // stats
+  const pending=admAllUsers.filter(u=>u.status==='pending');
+  const approved=admAllUsers.filter(u=>u.status==='approved');
+  const tp=document.getElementById('adm-total');
+  const pp=document.getElementById('adm-pending');
+  if(tp) tp.textContent=admAllUsers.length;
+  if(pp) pp.textContent=pending.length;
+  // pending list
+  const pel=document.getElementById('adm-pending-list');
+  if(pel){
+    if(!pending.length){
+      pel.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">目前沒有待審核學員 ✓</div>';
+    } else {
+      pel.innerHTML=pending.map(u=>`
+        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">${u.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${u.email||''}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${u.height_cm||''}cm · ${u.age||''}歲 · ${u.gender==='female'?'女':'男'} · ${{individual:'個人組',team:'團體組',both:'兩組'}[u.contest_type]||''}</div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button onclick="admUpdateStatus('${u.id}','approved')" style="flex:1;padding:8px;background:var(--acc);color:var(--g1);border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">✓ 通過</button>
+            <button onclick="admUpdateStatus('${u.id}','rejected')" style="flex:1;padding:8px;background:#fff;color:var(--red);border:1.5px solid var(--red);border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">✕ 拒絕</button>
+          </div>
+        </div>`).join('');
+    }
+  }
+  // approved list
+  const ael=document.getElementById('adm-approved-list');
+  if(ael){
+    if(!approved.length){
+      ael.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">尚無已通過學員</div>';
+    } else {
+      ael.innerHTML=approved.map(u=>`
+        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:11px 12px;display:flex;align-items:center;gap:10px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);">${u.name}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px;word-break:break-all;">${u.email||''}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">${u.groups?u.groups.emoji+' '+u.groups.name:'未分組'}</div>
+          </div>
+          <button onclick="admOpenMoveGroup('${u.id}','${u.name}')" style="padding:6px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;">調整組別</button>
+        </div>`).join('');
+    }
+  }
+}
+
+async function admUpdateStatus(userId, status){
+  const {error}=await sb.from('users').update({status}).eq('id',userId);
+  if(error){showToast('操作失敗');return;}
+  showToast(status==='approved'?'✓ 已通過審核':'✕ 已拒絕');
+  await admLoadUsers();
+}
+
+async function admLoadGroups(){
+  const {data}=await sb.from('groups').select('*').order('created_at');
+  admAllGroups=data||[];
+  const el=document.getElementById('adm-groups-list');
+  if(!el) return;
+  if(!admAllGroups.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">尚無組別，點上方新增</div>';
+    return;
+  }
+  el.innerHTML=admAllGroups.map(g=>{
+    const members=admAllUsers.filter(u=>u.group_id===g.id&&u.status==='approved');
+    return`<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);">${g.emoji||''} ${g.name}</div>
+        <span style="font-size:10px;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:10px;">${members.length}人</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        ${members.map(m=>`<div style="font-size:12px;color:var(--text);">• ${m.name}</div>`).join('')}
+        ${!members.length?'<div style="font-size:11px;color:#bbb;">尚無成員</div>':''}
+      </div>
+      <button onclick="admOpenAddMember('${g.id}','${g.name}')" style="width:100%;margin-top:8px;padding:7px;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--g1);">＋ 新增成員</button>
+    </div>`;
+  }).join('');
+}
+
+async function admLoadOfficial(){
+  const approved=admAllUsers.filter(u=>u.status==='approved');
+  const {data:oms}=await sb.from('official_measurements').select('*');
+  const el=document.getElementById('adm-official-list');
+  if(!el) return;
+  if(!approved.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">尚無已通過學員</div>';return;}
+  el.innerHTML=approved.map(u=>{
+    const om=(oms||[]).find(o=>o.user_id===u.id)||{};
+    const locked=om.end_locked;
+    return`<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);">${u.name}</div>
+        <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;${locked?'background:#d1fae5;color:#065f46':'background:#fef3c7;color:#92400e'}">${locked?'✓ 完成':'待填入'}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;">開賽數值</div>
+          <div style="font-size:11px;color:var(--text);">體重：${om.weight_start||'—'} kg</div>
+          <div style="font-size:11px;color:var(--text);">體脂：${om.bodyfat_start||'—'} %</div>
+          <div style="font-size:11px;color:var(--text);">腰圍：${om.waist_start||'—'} cm</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;">結賽數值</div>
+          ${locked?`
+            <div style="font-size:11px;color:var(--text);">體重：${om.weight_end} kg</div>
+            <div style="font-size:11px;color:var(--text);">體脂：${om.bodyfat_end} %</div>
+            <div style="font-size:11px;color:var(--text);">腰圍：${om.waist_end||'—'} cm</div>
+          `:`
+            <input id="ew-${u.id}" type="number" placeholder="體重 kg" step="0.1" style="width:100%;padding:6px 8px;border:1.5px solid var(--acc);border-radius:8px;font-size:12px;font-family:inherit;margin-bottom:4px;">
+            <input id="ef-${u.id}" type="number" placeholder="體脂 %" step="0.1" style="width:100%;padding:6px 8px;border:1.5px solid var(--acc);border-radius:8px;font-size:12px;font-family:inherit;">
+          `}
+        </div>
+      </div>
+      ${!om.start_locked?`
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:700;">填入開賽數值</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+          <input id="sw-${u.id}" type="number" placeholder="體重" step="0.1" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;">
+          <input id="sf-${u.id}" type="number" placeholder="體脂%" step="0.1" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;">
+          <input id="swaist-${u.id}" type="number" placeholder="腰圍" step="0.5" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;">
+        </div>
+        <button onclick="admSaveStart('${u.id}','${u.name}','${om.id||''}')" style="width:100%;padding:8px;background:var(--g1);color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">儲存開賽數值</button>
+      `:''}
+      ${!locked&&om.start_locked?`<button onclick="admSaveEnd('${u.id}','${u.name}')" style="width:100%;padding:8px;background:var(--acc);color:var(--g1);border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px;">儲存結賽並鎖定</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function admSaveStart(userId,name,omId){
+  const w=document.getElementById('sw-'+userId)?.value;
+  const f=document.getElementById('sf-'+userId)?.value;
+  if(!w||!f){showToast('請填入體重和體脂率');return;}
+  const payload={user_id:userId,contest_id:admContestData?.id,weight_start:parseFloat(w),bodyfat_start:parseFloat(f),waist_start:parseFloat(document.getElementById('swaist-'+userId)?.value||0),start_locked:true};
+  let error;
+  if(omId){({error}=await sb.from('official_measurements').update(payload).eq('id',omId));}
+  else{({error}=await sb.from('official_measurements').insert(payload));}
+  if(error){showToast('儲存失敗：'+error.message);return;}
+  showToast('✓ '+name+' 開賽數值已儲存！');
+  await admLoadOfficial();
+}
+
+async function admSaveEnd(userId,name){
+  const w=document.getElementById('ew-'+userId)?.value;
+  const f=document.getElementById('ef-'+userId)?.value;
+  if(!w||!f){showToast('請填入結賽體重和體脂率');return;}
+  const {error}=await sb.from('official_measurements').update({weight_end:parseFloat(w),bodyfat_end:parseFloat(f),end_locked:true}).eq('user_id',userId);
+  if(error){showToast('儲存失敗：'+error.message);return;}
+  showToast('✓ '+name+' 結賽數值已鎖定！');
+  await admLoadOfficial();
+}
+
+function admOpenMoveGroup(userId,name){
+  const sel=admAllGroups.map(g=>`<option value="${g.id}">${g.emoji||''} ${g.name}</option>`).join('');
+  document.getElementById('modal-title').textContent=name+' — 調整組別';
+  document.getElementById('panel-nut').style.display='none';
+  document.getElementById('panel-custom').style.display='none';
+  const modal=document.querySelector('.modal');
+  // reuse modal with custom content
+  const existing=document.getElementById('adm-modal-body');
+  if(existing) existing.remove();
+  const div=document.createElement('div');
+  div.id='adm-modal-body';
+  div.style.cssText='padding:14px;flex:1;';
+  div.innerHTML=`<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px;">選擇組別</label>
+    <select id="adm-move-sel" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;color:var(--text);margin-bottom:14px;">${sel}</select>
+    <button onclick="admConfirmMoveGroup('${userId}','${name}')" style="width:100%;padding:12px;background:var(--acc);color:var(--g1);border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">確認</button>`;
+  modal.appendChild(div);
+  document.getElementById('overlay').classList.remove('hidden');
+}
+
+async function admConfirmMoveGroup(userId,name){
+  const sel=document.getElementById('adm-move-sel');
+  if(!sel) return;
+  const gid=sel.value;
+  await sb.from('users').update({group_id:gid}).eq('id',userId);
+  document.getElementById('overlay').classList.add('hidden');
+  showToast('✓ '+name+' 組別已更新');
+  await admLoadUsers();await admLoadGroups();
+}
+
+function admOpenAddMember(groupId,groupName){
+  const unassigned=admAllUsers.filter(u=>u.status==='approved'&&(!u.group_id||u.group_id!==groupId));
+  const sel=unassigned.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  document.getElementById('modal-title').textContent='新增成員至 '+groupName;
+  document.getElementById('panel-nut').style.display='none';
+  document.getElementById('panel-custom').style.display='none';
+  const existing=document.getElementById('adm-modal-body');
+  if(existing) existing.remove();
+  const div=document.createElement('div');
+  div.id='adm-modal-body';
+  div.style.cssText='padding:14px;flex:1;';
+  div.innerHTML=`<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px;">選擇學員</label>
+    <select id="adm-add-sel" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;color:var(--text);margin-bottom:14px;">${sel||'<option>沒有可加入的學員</option>'}</select>
+    <button onclick="admConfirmAddMember('${groupId}','${groupName}')" style="width:100%;padding:12px;background:var(--acc);color:var(--g1);border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">確認加入</button>`;
+  const modal=document.querySelector('.modal');
+  modal.appendChild(div);
+  document.getElementById('overlay').classList.remove('hidden');
+}
+
+async function admConfirmAddMember(groupId,groupName){
+  const sel=document.getElementById('adm-add-sel');
+  if(!sel||!sel.value) return;
+  await sb.from('users').update({group_id:groupId}).eq('id',sel.value);
+  document.getElementById('overlay').classList.add('hidden');
+  showToast('✓ 成員已加入 '+groupName);
+  await admLoadUsers();await admLoadGroups();
+}
+
+function openNewGroupAdm(){
+  document.getElementById('modal-title').textContent='新增組別';
+  document.getElementById('panel-nut').style.display='none';
+  document.getElementById('panel-custom').style.display='none';
+  const existing=document.getElementById('adm-modal-body');
+  if(existing) existing.remove();
+  const div=document.createElement('div');
+  div.id='adm-modal-body';
+  div.style.cssText='padding:14px;flex:1;';
+  div.innerHTML=`<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px;">組別名稱（可加 emoji）</label>
+    <input id="adm-new-grp" type="text" placeholder="例：🔥 燃脂組" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;color:var(--text);margin-bottom:14px;">
+    <button onclick="admConfirmNewGroup()" style="width:100%;padding:12px;background:var(--acc);color:var(--g1);border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">建立組別</button>`;
+  const modal=document.querySelector('.modal');
+  modal.appendChild(div);
+  document.getElementById('overlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('adm-new-grp')?.focus(),100);
+}
+
+async function admConfirmNewGroup(){
+  const val=document.getElementById('adm-new-grp')?.value.trim();
+  if(!val){showToast('請輸入組名');return;}
+  const parts=val.split(' ');
+  let emoji='🌿',name=val;
+  if(parts.length>1&&/\p{Emoji}/u.test(parts[0])){emoji=parts[0];name=parts.slice(1).join(' ');}
+  await sb.from('groups').insert({name,emoji,contest_id:admContestData?.id});
+  document.getElementById('overlay').classList.add('hidden');
+  showToast('✓ 組別已新增：'+val);
+  await admLoadGroups();
+}
+
+async function admSaveSettings(){
+  if(!admContestData){showToast('尚無比賽資料');return;}
+  const {error}=await sb.from('contests').update({
+    name:document.getElementById('adm-s-name')?.value||'',
+    start_date:document.getElementById('adm-s-start')?.value||'',
+    end_date:document.getElementById('adm-s-end')?.value||'',
+    team_min:parseInt(document.getElementById('adm-s-min')?.value)||2,
+    team_max:parseInt(document.getElementById('adm-s-max')?.value)||5,
+  }).eq('id',admContestData.id);
+  if(error){showToast('儲存失敗');return;}
+  showToast('✓ 設定已儲存！');
+  await admLoadContest();
 }
 
 // ── START ──
