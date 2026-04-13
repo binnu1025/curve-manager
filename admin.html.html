@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>曲線管理比賽 — 管理後台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans TC',sans-serif;background:#f2f5f3;min-height:100vh;display:flex;flex-direction:column;}
+.topnav{background:#0d2b1a;padding:0 20px;height:52px;display:flex;align-items:center;gap:0;flex-shrink:0;}
+.tn-logo{font-size:14px;font-weight:900;color:#fff;margin-right:24px;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+.tn-logo span{background:#3ecf8e;color:#0d2b1a;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
+.tn-tabs{display:flex;height:100%;overflow-x:auto;}
+.tn-tabs::-webkit-scrollbar{display:none;}
+.tn-tab{padding:0 14px;height:100%;display:flex;align-items:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;flex-shrink:0;}
+.tn-tab:hover{color:rgba(255,255,255,.8);}
+.tn-tab.active{color:#fff;border-bottom-color:#3ecf8e;}
+.tn-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.tn-badge{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:11px;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+.tn-av{width:28px;height:28px;border-radius:50%;background:#3ecf8e;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#0d2b1a;cursor:pointer;}
+.main{flex:1;padding:20px;overflow-y:auto;}
+.screen{display:none;}
+.screen.active{display:block;}
+.page-title{font-size:18px;font-weight:700;color:#0d2b1a;margin-bottom:3px;}
+.page-sub{font-size:12px;color:#5a7a63;margin-bottom:18px;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.stat-card{background:#fff;border-radius:12px;padding:13px 16px;border:1px solid #e0ebe5;}
+.sc-val{font-size:26px;font-weight:700;color:#0d2b1a;}
+.sc-lbl{font-size:11px;color:#5a7a63;margin-top:3px;font-weight:500;}
+.card{background:#fff;border-radius:14px;border:1px solid #e0ebe5;overflow:hidden;margin-bottom:16px;}
+.card-header{padding:12px 16px;border-bottom:1px solid #f0f5f2;display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:13px;font-weight:700;color:#0d2b1a;}
+.card-sub{font-size:11px;color:#5a7a63;}
+.btn{padding:7px 14px;border-radius:9px;font-size:12px;font-weight:700;border:none;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn:active{transform:scale(.97);}
+.btn-green{background:#3ecf8e;color:#0d2b1a;}
+.btn-outline{background:#fff;color:#0d2b1a;border:1.5px solid #c8ddd0;}
+.btn-red{background:#fff;color:#ef4444;border:1.5px solid #fca5a5;}
+.btn-sm{padding:5px 11px;font-size:11px;}
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:#5a7a63;letter-spacing:.5px;background:#fafcfb;border-bottom:1px solid #eaf0ec;}
+.tbl td{padding:10px 14px;font-size:12px;color:#1a3020;border-bottom:1px solid #f5f8f6;vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:#fafcfb;}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.tg{background:#d1fae5;color:#065f46;}
+.ta{background:#fef3c7;color:#92400e;}
+.tb{background:#dbeafe;color:#1e40af;}
+.tp{background:#ede9fe;color:#4c1d95;}
+.tr{background:#fee2e2;color:#991b1b;}
+.pending-item{padding:13px 16px;border-bottom:1px solid #f0f5f2;display:flex;align-items:center;gap:12px;}
+.pending-item:last-child{border-bottom:none;}
+.pi-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;}
+.pi-info{flex:1;min-width:0;}
+.pi-name{font-size:13px;font-weight:700;color:#0d2b1a;}
+.pi-email{font-size:11px;color:#5a7a63;margin-top:1px;}
+.pi-tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
+.pi-data{font-size:11px;color:#5a7a63;background:#f5f8f6;border-radius:8px;padding:3px 9px;}
+.pi-actions{display:flex;gap:6px;flex-shrink:0;}
+.groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;padding:14px;}
+.group-card{background:#f5f8f6;border-radius:12px;padding:12px;border:1.5px solid #e0ebe5;}
+.gc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.gc-name-input{font-size:13px;font-weight:700;color:#0d2b1a;border:none;background:none;font-family:inherit;width:100%;cursor:text;}
+.gc-name-input:focus{outline:none;border-bottom:1.5px solid #3ecf8e;}
+.gc-count{font-size:10px;color:#5a7a63;background:#e8f0eb;border-radius:10px;padding:2px 8px;white-space:nowrap;}
+.gc-members{display:flex;flex-direction:column;gap:5px;}
+.gc-member{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#1a3020;}
+.gc-ml{display:flex;align-items:center;gap:7px;}
+.gc-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;}
+.gc-rm{font-size:11px;color:#ccc;cursor:pointer;opacity:0;}
+.gc-member:hover .gc-rm{opacity:1;}
+.gc-add{font-size:11px;color:#3ecf8e;cursor:pointer;margin-top:8px;font-weight:500;}
+.group-card.empty{border-style:dashed;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100px;cursor:pointer;}
+.om-item{padding:13px 16px;border-bottom:1px solid #f0f5f2;}
+.om-item:last-child{border-bottom:none;}
+.om-head{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+.om-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.om-name{font-size:13px;font-weight:700;color:#0d2b1a;flex:1;}
+.om-fields{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;}
+.om-field{display:flex;flex-direction:column;gap:4px;}
+.om-field label{font-size:9px;font-weight:700;color:#5a7a63;}
+.om-field input{padding:8px 10px;border:1.5px solid #e0ebe5;border-radius:9px;font-size:13px;font-weight:500;text-align:center;font-family:inherit;color:#0d2b1a;width:90px;}
+.om-field input:focus{outline:none;border-color:#3ecf8e;}
+.om-field input.locked{background:#f5f8f6;color:#5a7a63;border-style:dashed;pointer-events:none;}
+.om-field input.new{border-color:#3ecf8e;background:#f0fdf8;}
+.om-divider{font-size:18px;color:#ccc;padding-bottom:2px;}
+.om-save{padding:8px 16px;background:#3ecf8e;color:#0d2b1a;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;align-self:flex-end;}
+.locked-msg{font-size:11px;color:#5a7a63;background:#f5f8f6;border-radius:8px;padding:6px 11px;margin-top:7px;display:flex;align-items:center;gap:5px;}
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;}
+.si{display:flex;flex-direction:column;gap:5px;}
+.si-lbl{font-size:12px;font-weight:700;color:#0d2b1a;}
+.si-hint{font-size:10px;color:#5a7a63;}
+.si-input{padding:10px 12px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:14px;font-weight:500;font-family:inherit;color:#0d2b1a;}
+.si-input:focus{outline:none;border-color:#3ecf8e;}
+.result-podium{display:flex;align-items:flex-end;justify-content:center;gap:12px;padding:20px 16px 0;margin-bottom:18px;}
+.pod{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.pod-av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;}
+.pod-name{font-size:12px;font-weight:700;color:#0d2b1a;text-align:center;}
+.pod-stats{font-size:10px;color:#5a7a63;text-align:center;line-height:1.5;}
+.pod-base{border-radius:8px 8px 0 0;width:90px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.result-list{padding:0 16px 16px;}
+.ri{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f5f8f6;border-radius:12px;margin-bottom:7px;}
+.ri-rank{font-size:15px;min-width:26px;}
+.ri-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.ri-name{flex:1;font-size:13px;font-weight:700;color:#0d2b1a;}
+.ri-sub{font-size:10px;color:#5a7a63;}
+.ri-data{display:flex;gap:10px;}
+.ri-m{text-align:right;}
+.ri-val{font-size:13px;font-weight:700;color:#0d2b1a;}
+.ri-lbl{font-size:9px;color:#5a7a63;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:flex;align-items:center;justify-content:center;}
+.modal-bg.hidden{display:none;}
+.modal{background:#fff;border-radius:16px;padding:20px;width:320px;box-shadow:0 8px 32px rgba(0,0,0,.15);}
+.modal-title{font-size:15px;font-weight:700;color:#0d2b1a;margin-bottom:14px;}
+.modal-input{width:100%;padding:10px 12px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:14px;font-family:inherit;color:#0d2b1a;margin-bottom:12px;}
+.modal-input:focus{outline:none;border-color:#3ecf8e;}
+.modal-select{width:100%;padding:10px 12px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:13px;font-family:inherit;color:#0d2b1a;margin-bottom:14px;background:#fff;}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+.modal-label{font-size:11px;font-weight:700;color:#5a7a63;margin-bottom:5px;display:block;}
+.toast{position:fixed;bottom:24px;right:24px;background:#0d2b1a;color:#fff;font-size:13px;font-weight:500;padding:11px 20px;border-radius:28px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="topnav">
+  <div class="tn-logo">🌿 曲線管理比賽 <span>管理後台</span></div>
+  <div class="tn-tabs">
+    <div class="tn-tab active" onclick="goPage('pending',this)">學員審核 <span id="pending-badge" style="background:rgba(255,200,0,.3);color:#ffd700;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:4px;">0</span></div>
+    <div class="tn-tab" onclick="goPage('groups',this)">分組管理</div>
+    <div class="tn-tab" onclick="goPage('official',this)">官方量測</div>
+    <div class="tn-tab" onclick="goPage('results',this)">比賽結果</div>
+    <div class="tn-tab" onclick="goPage('settings',this)">比賽設定</div>
+  </div>
+  <div class="tn-right">
+    <div class="tn-badge" id="contest-badge">載入中...</div>
+    <div class="tn-av" id="admin-av">管</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ① 學員審核 -->
+  <div class="screen active" id="screen-pending">
+    <div class="page-title">學員審核</div>
+    <div class="page-sub">審核通過後學員才能使用完整功能</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="sc-val" id="st-total">—</div><div class="sc-lbl">已報名</div></div>
+      <div class="stat-card"><div class="sc-val" style="color:#f59e0b;" id="st-pending">—</div><div class="sc-lbl">待審核</div></div>
+      <div class="stat-card"><div class="sc-val" style="color:#3ecf8e;" id="st-approved">—</div><div class="sc-lbl">已通過</div></div>
+      <div class="stat-card"><div class="sc-val" style="color:#ef4444;" id="st-rejected">—</div><div class="sc-lbl">已拒絕</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">待審核</div><div class="card-sub">學員 Google 登入後報名，等候審核</div></div></div>
+      <div id="pending-list"><div style="padding:20px;text-align:center;color:#5a7a63;font-size:13px;">載入中...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">已通過學員</div><div style="font-size:11px;color:#5a7a63;">點「調整組別」可移動組別</div></div>
+      <div id="approved-list"><div style="padding:20px;text-align:center;color:#5a7a63;font-size:13px;">載入中...</div></div>
+    </div>
+  </div>
+
+  <!-- ② 分組管理 -->
+  <div class="screen" id="screen-groups">
+    <div class="page-title">分組管理</div>
+    <div class="page-sub">組名可以直接點擊編輯</div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">團體組別</div><button class="btn btn-green" onclick="openNewGroup()">＋ 新增組別</button></div>
+      <div class="groups-grid" id="groups-grid"><div style="padding:16px;color:#5a7a63;font-size:13px;">載入中...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">尚未分組 (<span id="unassigned-count">0</span> 人)</div></div>
+      <table class="tbl"><thead><tr><th>姓名</th><th>參賽類型</th><th>報名日期</th><th>操作</th></tr></thead><tbody id="unassigned-list"></tbody></table>
+    </div>
+  </div>
+
+  <!-- ③ 官方量測 -->
+  <div class="screen" id="screen-official">
+    <div class="page-title">官方量測</div>
+    <div class="page-sub">開賽數值鎖定後學員無法修改。結賽量測完成後按儲存即自動計算排名。</div>
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+      <div class="stat-card"><div class="sc-val" id="om-total">—</div><div class="sc-lbl">總人數</div></div>
+      <div class="stat-card"><div class="sc-val" style="color:#3ecf8e;" id="om-done">—</div><div class="sc-lbl">結賽已填入</div></div>
+      <div class="stat-card"><div class="sc-val" style="color:#f59e0b;" id="om-todo">—</div><div class="sc-lbl">結賽待填入</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">官方量測紀錄</div><div style="font-size:11px;color:#5a7a63;">左側鎖定為開賽，右側填入結賽</div></div>
+      <div id="official-list"><div style="padding:20px;text-align:center;color:#5a7a63;font-size:13px;">載入中...</div></div>
+    </div>
+  </div>
+
+  <!-- ④ 比賽結果 -->
+  <div class="screen" id="screen-results">
+    <div class="page-title">比賽結果</div>
+    <div class="page-sub">以官方開賽 vs 結賽數值計算排名</div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      <button class="btn btn-green" id="res-ind-btn" onclick="switchResult('individual',this)">🏃 個人組</button>
+      <button class="btn btn-outline" id="res-team-btn" onclick="switchResult('team',this)">👥 團體組</button>
+    </div>
+    <div id="result-individual" class="card"></div>
+    <div id="result-team" class="card" style="display:none;"></div>
+  </div>
+
+  <!-- ⑤ 比賽設定 -->
+  <div class="screen" id="screen-settings">
+    <div class="page-title">比賽設定</div>
+    <div class="page-sub">只有你可以修改</div>
+    <div class="card" style="margin-bottom:12px;">
+      <div class="card-header"><div class="card-title">比賽資訊</div></div>
+      <div class="settings-grid">
+        <div class="si"><div class="si-lbl">比賽名稱</div><input class="si-input" id="s-name" type="text" placeholder="2026 春季曲線管理比賽"></div>
+        <div class="si"><div class="si-lbl">主辦人</div><input class="si-input" id="s-host" type="text" placeholder="老師姓名"></div>
+        <div class="si"><div class="si-lbl">開賽日期</div><input class="si-input" id="s-start" type="date"><div class="si-hint">開賽當天進行第一次官方量測</div></div>
+        <div class="si"><div class="si-lbl">結賽日期</div><input class="si-input" id="s-end" type="date"><div class="si-hint">結賽當天進行最後一次官方量測</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px;">
+      <div class="card-header"><div class="card-title">團體組規則</div></div>
+      <div class="settings-grid">
+        <div class="si"><div class="si-lbl">每組最少人數</div><input class="si-input" id="s-min" type="number" min="2" value="2"><div class="si-hint">低於此人數不計入排名</div></div>
+        <div class="si"><div class="si-lbl">每組最多人數</div><input class="si-input" id="s-max" type="number" min="2" value="5"><div class="si-hint">超過上限無法加入同組</div></div>
+      </div>
+    </div>
+    <div style="padding:0 4px;">
+      <button class="btn btn-green" style="padding:12px 28px;font-size:13px;" onclick="saveSettings()">儲存設定</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg hidden" id="modal-bg" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-title">—</div>
+    <div id="modal-body"></div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeModal()">取消</button>
+      <button class="btn btn-green" onclick="confirmModal()">確認</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// ★ 填入你的 Supabase 設定
+// ══════════════════════════════════════════════
+const SUPABASE_URL = 'https://prkgdwhwxdrmldgakzjq.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_d5pjEDl-T2mE_B86Aj5F8Q_pNzpUNcT';
+// ══════════════════════════════════════════════
+
+const {createClient}=supabase;
+const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+let allUsers=[], allGroups=[], contestData=null, modalConfirmFn=null;
+
+async function init(){
+  await loadContest();
+  await loadUsers();
+  await loadGroups();
+  await loadOfficialMeasurements();
+  await loadResults();
+  loadSettings();
+}
+
+// ── CONTEST ──
+async function loadContest(){
+  const {data}=await sb.from('contests').select('*').eq('is_active',true).single();
+  contestData=data;
+  if(data){
+    const days=Math.floor((new Date()-new Date(data.start_date))/(1000*60*60*24))+1;
+    document.getElementById('contest-badge').textContent=data.name+' · 第'+Math.max(1,days)+'天';
+    document.getElementById('s-name').value=data.name||'';
+    document.getElementById('s-host').value=data.host_name||'';
+    document.getElementById('s-start').value=data.start_date||'';
+    document.getElementById('s-end').value=data.end_date||'';
+    document.getElementById('s-min').value=data.team_min||2;
+    document.getElementById('s-max').value=data.team_max||5;
+  }
+}
+async function saveSettings(){
+  if(!contestData){showToast('尚無比賽資料');return;}
+  const {error}=await sb.from('contests').update({
+    name:document.getElementById('s-name').value,
+    host_name:document.getElementById('s-host').value,
+    start_date:document.getElementById('s-start').value,
+    end_date:document.getElementById('s-end').value,
+    team_min:parseInt(document.getElementById('s-min').value),
+    team_max:parseInt(document.getElementById('s-max').value),
+  }).eq('id',contestData.id);
+  if(error){showToast('儲存失敗：'+error.message);return;}
+  showToast('✓ 比賽設定已儲存！');
+  await loadContest();
+}
+function loadSettings(){}
+
+// ── USERS ──
+async function loadUsers(){
+  const {data}=await sb.from('users').select('*,groups(name,emoji)').order('created_at',{ascending:false});
+  allUsers=data||[];
+  renderPendingList();
+  renderApprovedList();
+  updateStats();
+}
+function updateStats(){
+  const total=allUsers.length;
+  const pending=allUsers.filter(u=>u.status==='pending').length;
+  const approved=allUsers.filter(u=>u.status==='approved').length;
+  const rejected=allUsers.filter(u=>u.status==='rejected').length;
+  document.getElementById('st-total').textContent=total;
+  document.getElementById('st-pending').textContent=pending;
+  document.getElementById('st-approved').textContent=approved;
+  document.getElementById('st-rejected').textContent=rejected;
+  document.getElementById('pending-badge').textContent=pending;
+}
+function typeLabel(t){return{individual:'個人組',team:'團體組',both:'兩組都參加'}[t]||t;}
+function tagClass(t){return{individual:'tb',team:'tg',both:'tp'}[t]||'ta';}
+const COLORS=['#c0392b','#8e44ad','#0891b2','#16a085','#d97706','#2980b9','#4f46e5','#be185d','#065f46','#7c3aed'];
+function avatarColor(name){return COLORS[(name.charCodeAt(0)||0)%COLORS.length];}
+
+function renderPendingList(){
+  const pending=allUsers.filter(u=>u.status==='pending');
+  const el=document.getElementById('pending-list');
+  if(!pending.length){el.innerHTML='<div style="padding:20px;text-align:center;color:#5a7a63;font-size:13px;">目前沒有待審核的學員 ✓</div>';return;}
+  el.innerHTML=pending.map(u=>`
+    <div class="pending-item" id="pitem-${u.id}">
+      <div class="pi-av" style="background:${avatarColor(u.name)};">${u.name.charAt(0)}</div>
+      <div class="pi-info">
+        <div class="pi-name">${u.name}</div>
+        <div class="pi-email">${u.email||''}</div>
+        <div class="pi-tags">
+          <span class="tag ${tagClass(u.contest_type)}">${typeLabel(u.contest_type)}</span>
+          ${u.height_cm?`<span class="pi-data">${u.height_cm}cm · ${u.age}歲 · ${u.gender==='female'?'女':'男'}</span>`:''}
+        </div>
+      </div>
+      <div class="pi-actions">
+        <button class="btn btn-green btn-sm" onclick="updateStatus('${u.id}','approved')">✓ 通過</button>
+        <button class="btn btn-red btn-sm" onclick="updateStatus('${u.id}','rejected')">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderApprovedList(){
+  const approved=allUsers.filter(u=>u.status==='approved');
+  const el=document.getElementById('approved-list');
+  if(!approved.length){el.innerHTML='<div style="padding:16px;text-align:center;color:#5a7a63;font-size:13px;">尚無已通過學員</div>';return;}
+  el.innerHTML=`<table class="tbl"><thead><tr><th>姓名</th><th>Email</th><th>參賽類型</th><th>組別</th><th>報名日期</th><th>操作</th></tr></thead><tbody>${
+    approved.map(u=>`<tr>
+      <td>${u.name}</td>
+      <td style="font-size:11px;color:#5a7a63;">${u.email||'—'}</td>
+      <td><span class="tag ${tagClass(u.contest_type)}">${typeLabel(u.contest_type)}</span></td>
+      <td>${u.groups?`<span class="tag tg">${u.groups.emoji} ${u.groups.name}</span>`:'<span style="color:#aaa;font-size:11px;">未分組</span>'}</td>
+      <td style="font-size:11px;color:#5a7a63;">${u.created_at?u.created_at.slice(5,10):''}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="openMoveGroup('${u.id}','${u.name}')">調整組別</button></td>
+    </tr>`).join('')
+  }</tbody></table>`;
+}
+
+async function updateStatus(userId,status){
+  const {error}=await sb.from('users').update({status}).eq('id',userId);
+  if(error){showToast('操作失敗：'+error.message);return;}
+  showToast(status==='approved'?'✓ 已通過審核':'✕ 已拒絕');
+  await loadUsers();
+  if(status==='approved') await createOfficialMeasurementRecord(userId);
+}
+
+async function createOfficialMeasurementRecord(userId){
+  // check if already exists
+  const {data}=await sb.from('official_measurements').select('id').eq('user_id',userId).single();
+  if(!data){
+    await sb.from('official_measurements').insert({user_id:userId,contest_id:contestData?.id});
+  }
+}
+
+// ── GROUPS ──
+async function loadGroups(){
+  const {data}=await sb.from('groups').select('*').order('created_at');
+  allGroups=data||[];
+  renderGroupsGrid();
+  renderUnassignedList();
+}
+
+function renderGroupsGrid(){
+  const el=document.getElementById('groups-grid');
+  let html=allGroups.map(g=>{
+    const members=allUsers.filter(u=>u.group_id===g.id&&u.status==='approved');
+    return`<div class="group-card">
+      <div class="gc-head">
+        <input class="gc-name-input" value="${g.emoji||''} ${g.name}" onblur="saveGroupName('${g.id}',this.value)">
+        <span class="gc-count">${members.length}人</span>
+      </div>
+      <div class="gc-members">${members.map(m=>`
+        <div class="gc-member">
+          <div class="gc-ml"><div class="gc-av" style="background:${avatarColor(m.name)};">${m.name.charAt(0)}</div>${m.name}</div>
+          <span class="gc-rm" onclick="removeFromGroup('${m.id}','${m.name}')">✕</span>
+        </div>`).join('')}
+      </div>
+      <div class="gc-add" onclick="openAddMember('${g.id}','${g.name}')">＋ 新增成員</div>
+    </div>`;
+  }).join('');
+  html+=`<div class="group-card empty" onclick="openNewGroup()"><div style="font-size:28px;color:#c8ddd0;margin-bottom:8px;">＋</div><div style="font-size:12px;color:#5a7a63;font-weight:500;">新增組別</div></div>`;
+  el.innerHTML=html;
+}
+
+function renderUnassignedList(){
+  const unassigned=allUsers.filter(u=>u.status==='approved'&&!u.group_id);
+  document.getElementById('unassigned-count').textContent=unassigned.length;
+  const el=document.getElementById('unassigned-list');
+  if(!unassigned.length){el.innerHTML='<tr><td colspan="4" style="text-align:center;color:#aaa;font-size:12px;padding:16px;">所有學員皆已分組 ✓</td></tr>';return;}
+  el.innerHTML=unassigned.map(u=>`<tr>
+    <td>${u.name}</td>
+    <td><span class="tag ${tagClass(u.contest_type)}">${typeLabel(u.contest_type)}</span></td>
+    <td style="font-size:11px;color:#5a7a63;">${u.created_at?u.created_at.slice(5,10):''}</td>
+    <td><button class="btn btn-green btn-sm" onclick="openAddToGroup('${u.id}','${u.name}')">分配組別</button></td>
+  </tr>`).join('');
+}
+
+async function saveGroupName(groupId,val){
+  const parts=val.trim().split(' ');
+  let emoji='🌿',name=val.trim();
+  if(parts.length>1&&[...parts[0]].length===1&&/\p{Emoji}/u.test(parts[0])){emoji=parts[0];name=parts.slice(1).join(' ');}
+  await sb.from('groups').update({name,emoji}).eq('id',groupId);
+  showToast('✓ 組名已更新');
+}
+
+async function removeFromGroup(userId,name){
+  await sb.from('users').update({group_id:null}).eq('id',userId);
+  showToast(name+' 已從組別移除');
+  await loadUsers();await loadGroups();
+}
+
+// ── OFFICIAL MEASUREMENTS ──
+async function loadOfficialMeasurements(){
+  const approved=allUsers.filter(u=>u.status==='approved');
+  const {data:oms}=await sb.from('official_measurements').select('*');
+  const done=(oms||[]).filter(o=>o.end_locked).length;
+  const todo=approved.length-done;
+  document.getElementById('om-total').textContent=approved.length;
+  document.getElementById('om-done').textContent=done;
+  document.getElementById('om-todo').textContent=Math.max(0,todo);
+  const el=document.getElementById('official-list');
+  if(!approved.length){el.innerHTML='<div style="padding:16px;text-align:center;color:#5a7a63;font-size:13px;">尚無已通過學員</div>';return;}
+  el.innerHTML=approved.map(u=>{
+    const om=(oms||[]).find(o=>o.user_id===u.id)||{};
+    const locked=om.end_locked;
+    return`<div class="om-item">
+      <div class="om-head">
+        <div class="om-av" style="background:${avatarColor(u.name)};">${u.name.charAt(0)}</div>
+        <div class="om-name">${u.name} <span style="font-size:10px;color:#5a7a63;">${u.groups?u.groups.emoji+' '+u.groups.name:''}</span></div>
+        <span class="tag ${locked?'tg':'ta'}">${locked?'✓ 已完成':'待填入結賽'}</span>
+      </div>
+      <div class="om-fields">
+        <div class="om-field"><label>開賽體重</label><input class="locked" value="${om.weight_start||''}" readonly></div>
+        <div class="om-field"><label>開賽體脂%</label><input class="locked" value="${om.bodyfat_start||''}" readonly></div>
+        <div class="om-field"><label>開賽腰圍</label><input class="locked" value="${om.waist_start||''}" readonly></div>
+        <div class="om-divider">→</div>
+        <div class="om-field"><label>結賽體重</label><input class="${locked?'locked':om.weight_end?'':'new'}" id="ew-${u.id}" value="${om.weight_end||''}" ${locked?'readonly':''}></div>
+        <div class="om-field"><label>結賽體脂%</label><input class="${locked?'locked':om.bodyfat_end?'':'new'}" id="ef-${u.id}" value="${om.bodyfat_end||''}" ${locked?'readonly':''}></div>
+        ${!locked?`<button class="om-save" onclick="saveOfficial('${u.id}','${u.name}','${om.id||''}')">儲存並鎖定</button>`:''}
+      </div>
+      ${locked?`<div class="locked-msg">🔒 結賽數值已鎖定</div>`:''}
+      ${!om.start_locked&&!om.weight_start?`<div style="margin-top:6px;display:flex;gap:8px;align-items:flex-end;">
+        <div class="om-field"><label>開賽體重</label><input id="sw-${u.id}" class="new" placeholder="輸入"></div>
+        <div class="om-field"><label>開賽體脂%</label><input id="sf-${u.id}" class="new" placeholder="輸入"></div>
+        <div class="om-field"><label>開賽腰圍</label><input id="swaist-${u.id}" class="new" placeholder="輸入"></div>
+        <button class="om-save" onclick="saveStartOfficial('${u.id}','${u.name}','${om.id||''}')">儲存開賽</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function saveStartOfficial(userId,name,omId){
+  const w=document.getElementById('sw-'+userId)?.value;
+  const f=document.getElementById('sf-'+userId)?.value;
+  if(!w||!f){showToast('請填入體重和體脂率');return;}
+  const payload={user_id:userId,contest_id:contestData?.id,weight_start:parseFloat(w),bodyfat_start:parseFloat(f),waist_start:parseFloat(document.getElementById('swaist-'+userId)?.value||0),start_locked:true};
+  let error;
+  if(omId){({error}=await sb.from('official_measurements').update(payload).eq('id',omId));}
+  else{({error}=await sb.from('official_measurements').insert(payload));}
+  if(error){showToast('儲存失敗：'+error.message);return;}
+  showToast('✓ '+name+' 開賽數值已儲存！');
+  await loadOfficialMeasurements();
+}
+
+async function saveOfficial(userId,name,omId){
+  const w=document.getElementById('ew-'+userId)?.value;
+  const f=document.getElementById('ef-'+userId)?.value;
+  if(!w||!f){showToast('請填入結賽體重和體脂率');return;}
+  const payload={weight_end:parseFloat(w),bodyfat_end:parseFloat(f),end_locked:true};
+  const {error}=await sb.from('official_measurements').update(payload).eq('user_id',userId);
+  if(error){showToast('儲存失敗：'+error.message);return;}
+  showToast('✓ '+name+' 結賽數值已鎖定！');
+  await loadOfficialMeasurements();
+  await loadResults();
+}
+
+// ── RESULTS ──
+async function loadResults(){
+  const {data:ind}=await sb.from('leaderboard_individual').select('*');
+  const {data:team}=await sb.from('leaderboard_team').select('*');
+  renderIndResult(ind||[]);
+  renderTeamResult(team||[]);
+}
+function renderIndResult(data){
+  const el=document.getElementById('result-individual');
+  if(!data.length){el.innerHTML='<div style="padding:20px;text-align:center;color:#5a7a63;font-size:13px;">尚無結賽數據，填入官方量測後自動計算</div>';return;}
+  const medals=['🥇','🥈','🥉'];
+  const podiumColors=['#fde68a','#e0e0e0','#fed7aa'];
+  const top3=data.slice(0,3);
+  const order=[1,0,2];
+  let podiumHtml='<div class="result-podium">';
+  order.forEach(i=>{
+    if(!top3[i])return;
+    const u=top3[i];
+    const h=i===0?70:i===1?50:36;
+    podiumHtml+=`<div class="pod">
+      <div class="pod-av" style="width:${i===0?50:42}px;height:${i===0?50:42}px;background:${avatarColor(u.name)};">${u.name.charAt(0)}</div>
+      <div class="pod-name">${u.name}</div>
+      <div class="pod-stats">體脂 -${u.bodyfat_diff}%<br>體重 -${u.weight_diff}kg</div>
+      <div class="pod-base" style="height:${h}px;background:${podiumColors[i]};">${medals[i]}</div>
+    </div>`;
+  });
+  podiumHtml+='</div>';
+  const listHtml='<div class="result-list">'+data.map((u,i)=>`
+    <div class="ri">
+      <div class="ri-rank">${medals[i]||i+1}</div>
+      <div class="ri-av" style="background:${avatarColor(u.name)};">${u.name.charAt(0)}</div>
+      <div style="flex:1;"><div class="ri-name">${u.name}</div><div class="ri-sub">${u.group_emoji||''} ${u.group_name||''}</div></div>
+      <div class="ri-data">
+        <div class="ri-m"><div class="ri-val">${u.weight_start} → ${u.weight_end} kg</div><div class="ri-lbl">體重 -${u.weight_diff}kg</div></div>
+        <div class="ri-m"><div class="ri-val">${u.bodyfat_start} → ${u.bodyfat_end}%</div><div class="ri-lbl">體脂 -${u.bodyfat_diff}%</div></div>
+      </div>
+    </div>`).join('')+'</div>';
+  el.innerHTML=podiumHtml+listHtml;
+}
+function renderTeamResult(data){
+  const el=document.getElementById('result-team');
+  if(!data.length){el.innerHTML='<div style="padding:20px;text-align:center;color:#5a7a63;font-size:13px;">尚無結賽數據</div>';return;}
+  el.innerHTML='<div class="result-list" style="padding-top:16px;">'+data.map((t,i)=>{
+    const medals=['🥇','🥈','🥉'];
+    return`<div class="ri">
+      <div class="ri-rank">${medals[i]||i+1}</div>
+      <div class="ri-av" style="background:#1a4a2e;border-radius:8px;">${t.emoji||'🌿'}</div>
+      <div style="flex:1;"><div class="ri-name">${t.group_name}</div><div class="ri-sub">${t.member_count}人</div></div>
+      <div class="ri-data">
+        <div class="ri-m"><div class="ri-val">-${t.avg_weight_diff}kg</div><div class="ri-lbl">平均體重</div></div>
+        <div class="ri-m"><div class="ri-val">-${t.avg_bodyfat_diff}%</div><div class="ri-lbl">平均體脂</div></div>
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+}
+function switchResult(t,el){
+  document.getElementById('result-individual').style.display=t==='individual'?'block':'none';
+  document.getElementById('result-team').style.display=t==='team'?'block':'none';
+  document.getElementById('res-ind-btn').className='btn '+(t==='individual'?'btn-green':'btn-outline');
+  document.getElementById('res-team-btn').className='btn '+(t==='team'?'btn-green':'btn-outline');
+}
+
+// ── MODAL HELPERS ──
+function openMoveGroup(userId,name){
+  document.getElementById('modal-title').textContent=name+' — 調整組別';
+  document.getElementById('modal-body').innerHTML=`
+    <span class="modal-label">選擇新組別</span>
+    <select class="modal-select" id="move-sel">
+      ${allGroups.map(g=>`<option value="${g.id}">${g.emoji} ${g.name}</option>`).join('')}
+    </select>`;
+  modalConfirmFn=async()=>{
+    const gid=document.getElementById('move-sel').value;
+    await sb.from('users').update({group_id:gid}).eq('id',userId);
+    closeModal();showToast('✓ '+name+' 組別已更新');
+    await loadUsers();await loadGroups();
+  };
+  document.getElementById('modal-bg').classList.remove('hidden');
+}
+function openAddMember(groupId,groupName){
+  const unassigned=allUsers.filter(u=>u.status==='approved'&&(!u.group_id||u.group_id!==groupId));
+  document.getElementById('modal-title').textContent='新增成員至 '+groupName;
+  document.getElementById('modal-body').innerHTML=`
+    <span class="modal-label">選擇學員</span>
+    <select class="modal-select" id="add-sel">
+      ${unassigned.map(u=>`<option value="${u.id}">${u.name}</option>`).join('')}
+    </select>`;
+  modalConfirmFn=async()=>{
+    const uid=document.getElementById('add-sel').value;
+    await sb.from('users').update({group_id:groupId}).eq('id',uid);
+    closeModal();showToast('✓ 成員已加入'+groupName);
+    await loadUsers();await loadGroups();
+  };
+  document.getElementById('modal-bg').classList.remove('hidden');
+}
+function openAddToGroup(userId,name){
+  document.getElementById('modal-title').textContent='分配 '+name+' 的組別';
+  document.getElementById('modal-body').innerHTML=`
+    <span class="modal-label">選擇組別</span>
+    <select class="modal-select" id="assign-sel">
+      ${allGroups.map(g=>`<option value="${g.id}">${g.emoji} ${g.name}</option>`).join('')}
+    </select>`;
+  modalConfirmFn=async()=>{
+    const gid=document.getElementById('assign-sel').value;
+    await sb.from('users').update({group_id:gid}).eq('id',userId);
+    closeModal();showToast('✓ '+name+' 已分配組別');
+    await loadUsers();await loadGroups();
+  };
+  document.getElementById('modal-bg').classList.remove('hidden');
+}
+function openNewGroup(){
+  document.getElementById('modal-title').textContent='新增組別';
+  document.getElementById('modal-body').innerHTML=`
+    <span class="modal-label">組別名稱（可加 emoji）</span>
+    <input class="modal-input" id="new-grp-name" type="text" placeholder="例：🔥 燃脂組">`;
+  modalConfirmFn=async()=>{
+    const val=document.getElementById('new-grp-name').value.trim();
+    if(!val){showToast('請輸入組名');return;}
+    const parts=val.split(' ');
+    let emoji='🌿',name=val;
+    if(parts.length>1&&/\p{Emoji}/u.test(parts[0])){emoji=parts[0];name=parts.slice(1).join(' ');}
+    await sb.from('groups').insert({name,emoji,contest_id:contestData?.id});
+    closeModal();showToast('✓ 組別已新增：'+val);
+    await loadGroups();
+  };
+  document.getElementById('modal-bg').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('new-grp-name')?.focus(),100);
+}
+function closeModal(){document.getElementById('modal-bg').classList.add('hidden');}
+function confirmModal(){if(modalConfirmFn)modalConfirmFn();}
+
+// ── NAV ──
+function goPage(name,el){
+  document.querySelectorAll('.tn-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+init();
+</script>
+</body>
+</html>
