@@ -2,1482 +2,801 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>曲線管理比賽</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{
-  --g1:#0d2b1a;--g2:#1a4a2e;--g3:#2d6a4f;--acc:#3ecf8e;--light:#d4f0e2;
-  --bg:#f2f8f5;--card:#fff;--text:#0d2b1a;--muted:#5a7a63;--border:#c8e0d0;
-  --amber:#f59e0b;--red:#ef4444;--blue:#3b82f6;--purple:#8b5cf6;
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);min-height:100vh;display:flex;justify-content:center;padding:12px 8px 32px;}
-.phone{width:100%;max-width:400px;background:var(--card);border-radius:24px;overflow:hidden;box-shadow:0 8px 40px rgba(13,43,26,.18);display:flex;flex-direction:column;min-height:90vh;}
-
-/* ── STATUS PLACEHOLDER ── */
-#status-msg{background:#fff8e1;color:#856404;font-size:12px;padding:8px 14px;text-align:center;border-bottom:1px solid #fde68a;display:none;}
-
-/* ── LOGIN ── */
-#login-view{display:flex;flex-direction:column;align-items:center;padding:52px 28px 32px;flex:1;background:linear-gradient(160deg,var(--g1),var(--g3));}
-.lv-logo{width:76px;height:76px;background:rgba(255,255,255,.12);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:34px;margin-bottom:18px;border:1.5px solid rgba(255,255,255,.2);}
-.lv-title{font-size:22px;font-weight:900;color:#fff;margin-bottom:6px;letter-spacing:.5px;}
-.lv-sub{font-size:13px;color:rgba(255,255,255,.6);text-align:center;line-height:1.7;margin-bottom:32px;}
-.google-btn{width:100%;padding:14px;background:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--g1);margin-bottom:12px;transition:opacity .15s;}
-.google-btn:hover{opacity:.9;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justify-content:center;align-items:center;}
+#app{width:100%;max-width:430px;height:100vh;height:100dvh;background:#f2f8f5;display:flex;flex-direction:column;overflow:hidden;}
+/* FULL SCREEN */
+.fv{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:linear-gradient(160deg,#0d2b1a,#2d6a4f);z-index:10;padding:52px 28px 32px;}
+.fv.on{display:flex;}
+/* TOPBAR */
+.topbar{background:#0d2b1a;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.tb-title{color:#fff;font-size:15px;font-weight:900;}
+.tb-badge{background:#3ecf8e;color:#0d2b1a;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;}
+/* PAGES */
+.pages{flex:1;position:relative;overflow:hidden;}
+.page{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;display:none;}
+.page.on{display:block;}
+/* TABS */
+.tabs{display:flex;background:#fff;border-top:1px solid #e0ebe5;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);}
+.tab{flex:1;padding:8px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:#5a7a63;font-size:10px;font-weight:500;border:none;background:none;font-family:inherit;}
+.tab.on{color:#0d2b1a;}
+.tab-ic{font-size:22px;line-height:1;}
+.tab-dot{width:4px;height:4px;border-radius:50%;background:#0d2b1a;opacity:0;}
+.tab.on .tab-dot{opacity:1;}
+/* LOGIN */
+.lv-logo{width:72px;height:72px;background:rgba(255,255,255,.12);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:18px;border:1.5px solid rgba(255,255,255,.2);}
+.lv-title{font-size:22px;font-weight:900;color:#fff;margin-bottom:6px;}
+.lv-sub{font-size:13px;color:rgba(255,255,255,.65);text-align:center;line-height:1.7;margin-bottom:32px;}
+.google-btn{width:100%;padding:14px;background:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;color:#0d2b1a;margin-bottom:12px;}
 .lv-note{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:11px 14px;font-size:12px;color:rgba(255,255,255,.65);text-align:center;width:100%;}
-
-/* ── PENDING APPROVAL ── */
-#pending-view{display:none;flex-direction:column;align-items:center;padding:52px 28px 32px;flex:1;background:linear-gradient(160deg,var(--g1),var(--g3));}
-.pv-icon{font-size:48px;margin-bottom:16px;}
-.pv-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:8px;}
-.pv-sub{font-size:13px;color:rgba(255,255,255,.65);text-align:center;line-height:1.7;}
-.pv-logout{margin-top:24px;padding:10px 22px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:12px;color:rgba(255,255,255,.8);font-size:13px;cursor:pointer;font-family:inherit;}
-
-/* ── REGISTRATION ── */
-#reg-view{display:none;flex-direction:column;flex:1;overflow-y:auto;}
-.reg-hero{background:linear-gradient(160deg,var(--g1),var(--g3));padding:22px 18px 18px;text-align:center;}
-.reg-logo{font-size:28px;margin-bottom:8px;}
-.reg-title{font-size:17px;font-weight:900;color:#fff;}
-.reg-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:4px;}
-.steps{display:flex;align-items:center;gap:4px;margin-top:14px;justify-content:center;}
-.step{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
-.step.active{background:var(--acc);color:var(--g1);}
-.step.done{background:rgba(255,255,255,.3);color:rgba(255,255,255,.8);font-size:10px;}
-.step.todo{background:rgba(255,255,255,.15);color:rgba(255,255,255,.4);}
-.step-line{flex:1;height:1.5px;background:rgba(255,255,255,.2);max-width:28px;}
-.reg-body{padding:16px 18px;flex:1;}
-.fg{margin-bottom:12px;}
-.fg label{font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;}
-.fi{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:11px;font-size:14px;font-family:inherit;color:var(--text);background:#fff;}
-.fi:focus{outline:none;border-color:var(--acc);}
-.fg-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.gender-row{display:flex;gap:8px;}
-.gb{flex:1;padding:10px;border-radius:11px;border:1.5px solid var(--border);background:#fff;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;text-align:center;font-family:inherit;}
-.gb.sel{border-color:var(--acc);background:var(--light);color:var(--g1);}
-.type-btn{padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:#fff;display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:8px;}
-.type-btn.sel{border-color:var(--acc);background:var(--light);}
-.tb-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-left:auto;}
-.tb-check.on{background:var(--acc);border-color:var(--acc);color:#fff;}
-.calc-box{background:var(--bg);border-radius:12px;padding:12px;margin-bottom:12px;}
-.calc-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;}
-.calc-val{font-size:16px;font-weight:700;color:var(--text);}
-.calc-lbl{font-size:9px;color:var(--muted);margin-top:2px;}
-.note-box{background:#fff8e1;border-radius:10px;padding:10px 12px;font-size:11px;color:#856404;line-height:1.5;margin-bottom:12px;}
-.btn-next{width:100%;padding:13px;background:var(--acc);color:var(--g1);border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px;}
-.btn-back{width:100%;padding:11px;background:#fff;color:var(--muted);border:1.5px solid var(--border);border-radius:13px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;}
-
-/* ── MAIN APP ── */
-#app-view{display:none;flex-direction:column;flex:1;}
-.topnav{background:var(--g1);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.tn-title{color:#fff;font-size:15px;font-weight:900;letter-spacing:.3px;}
-.tn-badge{background:var(--acc);color:var(--g1);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;}
-.bottom-tabs{display:flex;background:#fff;border-top:1.5px solid var(--border);flex-shrink:0;}
-.btab{flex:1;padding:10px 2px 8px;font-size:10px;text-align:center;color:var(--muted);cursor:pointer;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px;}
-.btab.active{color:var(--g1);}
-.btab-icon{font-size:20px;line-height:1;}
-.btab-dot{width:5px;height:5px;border-radius:50%;background:var(--g1);opacity:0;}
-.btab.active .btab-dot{opacity:1;}
-.screen{flex:1;overflow-y:auto;padding:16px;}
-.screen.hidden{display:none;}
-
 /* HOME */
-.hero{background:linear-gradient(135deg,var(--g1),var(--g2));border-radius:18px;padding:18px;margin-bottom:14px;}
-.hero-greet{font-size:12px;color:rgba(255,255,255,.6);margin-bottom:3px;}
-.hero-name{font-size:19px;font-weight:900;color:#fff;margin-bottom:14px;}
-.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-.hs{background:rgba(255,255,255,.1);border-radius:11px;padding:9px 6px;text-align:center;}
+.hero{background:linear-gradient(135deg,#0d2b1a,#1a4a2e);border-radius:18px;padding:16px;margin-bottom:12px;}
+.hero-gr{font-size:12px;color:rgba(255,255,255,.6);margin-bottom:2px;}
+.hero-nm{font-size:19px;font-weight:900;color:#fff;margin-bottom:14px;}
+.hs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.hs{background:rgba(255,255,255,.1);border-radius:11px;padding:9px 4px;text-align:center;}
 .hs-val{font-size:16px;font-weight:700;color:#fff;}
 .hs-lbl{font-size:9px;color:rgba(255,255,255,.5);margin-top:2px;}
-.hs-ch{font-size:10px;color:var(--acc);margin-top:2px;font-weight:500;}
-.sec-title{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.5px;margin-bottom:10px;}
-.goals-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
-.goal-card{background:var(--bg);border-radius:14px;padding:12px;display:flex;align-items:center;gap:10px;}
-.goal-ring{position:relative;width:42px;height:42px;flex-shrink:0;}
-.goal-ring svg{transform:rotate(-90deg);}
-.ring-bg{fill:none;stroke:#e0e0e0;stroke-width:4;}
-.ring-fg{fill:none;stroke-width:4;stroke-linecap:round;}
-.ring-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--text);}
-.goal-info .gn{font-size:10px;color:var(--muted);font-weight:500;}
-.goal-info .gv{font-size:14px;font-weight:700;color:var(--text);margin-top:2px;}
-.goal-info .gt{font-size:9px;color:var(--muted);}
-.rank-card{background:linear-gradient(135deg,var(--g1),var(--g2));border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
-.rc-left{display:flex;align-items:center;gap:10px;}
-.rc-medal{font-size:26px;}
-.rc-rank{font-size:20px;font-weight:900;color:#fff;}
-.rc-sub{font-size:10px;color:rgba(255,255,255,.5);}
-.rc-right{text-align:right;}
-.rc-stat{font-size:12px;font-weight:700;color:var(--acc);}
-.rc-days{font-size:10px;color:rgba(255,255,255,.5);margin-top:2px;}
-.today-card{background:var(--bg);border-radius:14px;padding:13px;}
-.tc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-.tc-title{font-size:12px;font-weight:700;color:var(--muted);}
-.tc-link{font-size:11px;color:var(--acc);cursor:pointer;font-weight:500;}
-.bar-item{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
-.bar-icon{font-size:14px;width:18px;text-align:center;}
-.bar-wrap{flex:1;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:3px;transition:width .4s;}
-.bar-num{font-size:10px;color:var(--muted);min-width:64px;text-align:right;}
-
+.hs-ch{font-size:10px;color:#3ecf8e;margin-top:2px;font-weight:500;}
+.goals-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.gc{background:#fff;border-radius:14px;padding:12px;display:flex;align-items:center;gap:10px;border:1px solid #e0ebe5;}
+.gr{position:relative;width:42px;height:42px;flex-shrink:0;}
+.gr svg{transform:rotate(-90deg);}
+.rbg{fill:none;stroke:#e8f0ec;stroke-width:4;}
+.rfg{fill:none;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .5s;}
+.rpct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#0d2b1a;}
+.gi-l{font-size:10px;color:#5a7a63;font-weight:500;}
+.gi-v{font-size:14px;font-weight:700;color:#0d2b1a;margin-top:2px;}
+.gi-t{font-size:9px;color:#5a7a63;}
+.rank-s{background:linear-gradient(135deg,#0d2b1a,#1a4a2e);border-radius:14px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;}
 /* INPUT */
-.inp-section{background:var(--bg);border-radius:14px;padding:13px;margin-bottom:12px;}
-.is-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
-.is-icon{font-size:20px;}
-.is-title{font-size:14px;font-weight:700;color:var(--text);}
-.is-sub{font-size:10px;color:var(--muted);margin-top:1px;}
-.meal-block{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:7px;}
-.mb-head{display:flex;align-items:center;justify-content:space-between;}
-.mb-left{display:flex;align-items:center;gap:7px;}
-.mb-icon{font-size:15px;}
-.mb-name{font-size:13px;font-weight:700;color:var(--text);}
-.mb-kcal{font-size:10px;color:var(--muted);}
-.mb-add{width:27px;height:27px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);color:var(--g2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;}
-.mb-items{margin-top:7px;display:flex;flex-direction:column;gap:5px;}
-.mi{background:var(--bg);border-radius:9px;padding:7px 10px;display:flex;align-items:flex-start;gap:8px;}
-.mi-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
-.mi-info{flex:1;min-width:0;}
-.mi-name{font-size:12px;font-weight:700;color:var(--text);word-break:break-all;line-height:1.4;}
-.mi-macro{font-size:10px;color:var(--muted);margin-top:2px;}
-.mi-del{border:none;background:none;color:#ccc;font-size:13px;cursor:pointer;flex-shrink:0;margin-top:1px;}
-.empty-meal{font-size:11px;color:#bbb;text-align:center;padding:4px 0;}
-.water-row{display:flex;align-items:center;gap:10px;}
-.water-num{font-size:22px;font-weight:700;color:var(--blue);min-width:72px;}
-.water-unit{font-size:12px;color:var(--muted);}
-.water-btns{margin-left:auto;display:flex;gap:7px;}
-.wbtn{padding:8px 14px;border-radius:11px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:700;color:var(--g1);cursor:pointer;font-family:inherit;}
+.is{background:#fff;border-radius:14px;padding:13px;margin-bottom:10px;border:1px solid #e0ebe5;}
+.is-hd{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.is-ic{font-size:18px;}
+.is-tl{font-size:14px;font-weight:700;color:#0d2b1a;}
+.is-sb{font-size:10px;color:#5a7a63;margin-top:1px;}
+.mb{background:#f2f8f5;border-radius:12px;padding:10px 12px;margin-bottom:7px;}
+.mb-hd{display:flex;align-items:center;justify-content:space-between;}
+.mb-lf{display:flex;align-items:center;gap:7px;}
+.mb-nm{font-size:13px;font-weight:700;color:#0d2b1a;}
+.mb-kc{font-size:10px;color:#5a7a63;margin-top:1px;}
+.mb-add{width:28px;height:28px;border-radius:50%;border:1.5px solid #c8e0d0;background:#fff;color:#1a4a2e;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;}
+.mi-list{margin-top:7px;display:flex;flex-direction:column;gap:5px;}
+.mi{background:#fff;border-radius:9px;padding:8px 10px;display:flex;align-items:flex-start;gap:8px;}
+.mi-ic{font-size:15px;flex-shrink:0;margin-top:1px;}
+.mi-inf{flex:1;min-width:0;}
+.mi-nm{font-size:12px;font-weight:700;color:#0d2b1a;word-break:break-all;line-height:1.4;}
+.mi-mc{font-size:10px;color:#5a7a63;margin-top:2px;line-height:1.5;}
+.mi-dl{border:none;background:none;color:#ccc;font-size:13px;cursor:pointer;flex-shrink:0;padding:2px;}
+.em{font-size:11px;color:#bbb;text-align:center;padding:4px 0;}
+.wr{display:flex;align-items:center;gap:10px;}
+.wn{font-size:22px;font-weight:700;color:#3b82f6;min-width:70px;}
+.wu{font-size:12px;color:#5a7a63;}
+.wbs{margin-left:auto;display:flex;gap:8px;}
+.wb{padding:8px 14px;border-radius:11px;border:1.5px solid #e0ebe5;background:#f2f8f5;font-size:12px;font-weight:700;color:#0d2b1a;cursor:pointer;font-family:inherit;}
 .ex-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
-.ex-item{background:#fff;border:1.5px solid var(--border);border-radius:11px;padding:9px;text-align:center;cursor:pointer;font-size:12px;color:var(--muted);font-weight:500;}
+.ex-item{background:#f2f8f5;border:1.5px solid #e0ebe5;border-radius:11px;padding:9px;text-align:center;cursor:pointer;font-size:12px;color:#5a7a63;font-weight:500;}
 .ex-item .ei{font-size:18px;display:block;margin-bottom:3px;}
-.ex-item.sel{border-color:var(--acc);background:var(--light);color:var(--g1);}
+.ex-item.on{border-color:#3ecf8e;background:#d4f0e2;color:#0d2b1a;}
 .ex-dur{display:flex;align-items:center;gap:8px;margin-top:9px;}
-.ex-dur label{font-size:12px;color:var(--muted);font-weight:500;white-space:nowrap;}
-.ex-dur input{flex:1;padding:8px 11px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;color:var(--text);}
-.ex-dur span{font-size:12px;color:var(--muted);}
-.sleep-row{display:flex;align-items:center;gap:10px;}
-.sleep-row label{font-size:12px;color:var(--muted);font-weight:500;min-width:50px;}
-.sleep-row input{flex:1;}
-.sleep-val{font-size:15px;font-weight:700;color:var(--text);min-width:40px;text-align:right;}
-.mood-row{display:flex;gap:6px;justify-content:space-around;margin-top:4px;}
-.mood-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 10px;border-radius:11px;border:1.5px solid var(--border);background:#fff;cursor:pointer;font-size:10px;color:var(--muted);font-weight:500;}
+.ex-dur label{font-size:12px;color:#5a7a63;font-weight:500;white-space:nowrap;}
+.ex-dur input{flex:1;padding:8px 11px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:14px;font-family:inherit;color:#0d2b1a;background:#f2f8f5;}
+.sl-row{display:flex;align-items:center;gap:10px;}
+.sl-row label{font-size:12px;color:#5a7a63;font-weight:500;min-width:50px;}
+.sl-row input[type=range]{flex:1;}
+.sl-val{font-size:15px;font-weight:700;color:#0d2b1a;min-width:36px;text-align:right;}
+.mood-row{display:flex;gap:5px;}
+.mood-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;border-radius:11px;border:1.5px solid #e0ebe5;background:#f2f8f5;cursor:pointer;font-size:10px;color:#5a7a63;font-weight:500;flex:1;}
 .mood-btn .mi2{font-size:20px;}
-.mood-btn.sel{border-color:var(--acc);background:var(--light);color:var(--g1);}
-.note-ta{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:11px;font-size:13px;font-family:inherit;resize:none;height:68px;color:var(--text);margin-top:9px;}
-.note-ta:focus{outline:none;border-color:var(--acc);}
-.save-bar{background:#fff;border-top:1.5px solid var(--border);padding:12px 16px;flex-shrink:0;}
-.save-main-btn{width:100%;padding:13px;background:var(--acc);color:var(--g1);border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
-.save-status{font-size:11px;color:var(--muted);text-align:center;margin-top:5px;}
-
+.mood-btn.on{border-color:#3ecf8e;background:#d4f0e2;color:#0d2b1a;}
+.note-ta{width:100%;padding:10px 12px;border:1.5px solid #e0ebe5;border-radius:11px;font-size:13px;font-family:inherit;resize:none;height:68px;color:#0d2b1a;margin-top:9px;background:#f2f8f5;}
+.sv-btn{width:100%;padding:13px;background:#3ecf8e;color:#0d2b1a;border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px;}
+.sv-st{font-size:11px;color:#5a7a63;text-align:center;margin-top:6px;}
 /* MEASURE */
-.meas-tabs{display:flex;background:var(--bg);border-radius:20px;padding:3px;gap:2px;margin-bottom:14px;}
-.mtab{flex:1;padding:7px;border-radius:17px;font-size:12px;border:none;background:none;color:var(--muted);cursor:pointer;font-family:inherit;font-weight:500;}
-.mtab.active{background:var(--g1);color:#fff;}
-.photo-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.ps{aspect-ratio:3/4;background:var(--bg);border:1.5px dashed var(--border);border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;}
-.ps-icon{font-size:20px;}
-.ps-lbl{font-size:10px;color:var(--muted);font-weight:500;}
-.form-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
-.form-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border-radius:11px;padding:11px 13px;}
-.form-label{font-size:13px;color:var(--text);font-weight:500;}
-.form-sub{font-size:9px;color:var(--muted);margin-top:1px;}
-.form-input{width:82px;padding:7px 10px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;text-align:right;background:#fff;color:var(--text);font-family:inherit;}
-.form-input:focus{outline:none;border-color:var(--acc);}
-.meas-save{width:100%;padding:13px;background:var(--acc);color:var(--g1);border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
-.trend-card{background:var(--bg);border-radius:14px;padding:13px;margin-bottom:12px;}
-.tc-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
-.tc-ttl{font-size:13px;font-weight:700;color:var(--text);}
-.tc-unit{font-size:11px;color:var(--muted);}
-.tc-bars{display:flex;align-items:flex-end;gap:5px;height:64px;}
-.tc-bar{flex:1;border-radius:3px 3px 0 0;opacity:.5;min-height:4px;}
-.tc-bar.latest{opacity:1;}
-.tc-lbls{display:flex;gap:5px;margin-top:4px;}
-.tc-lbl{flex:1;font-size:9px;text-align:center;color:var(--muted);}
-
+.m-tabs{display:flex;background:#e8f0ec;border-radius:20px;padding:3px;gap:2px;margin-bottom:14px;}
+.mtab{flex:1;padding:7px;border-radius:17px;font-size:12px;border:none;background:none;color:#5a7a63;cursor:pointer;font-family:inherit;font-weight:500;}
+.mtab.on{background:#0d2b1a;color:#fff;}
+.ph-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.ps{aspect-ratio:3/4;background:#fff;border:1.5px dashed #c8e0d0;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;}
+.f-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.f-row{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:12px;padding:12px 14px;border:1px solid #e0ebe5;}
+.f-lbl{font-size:13px;color:#0d2b1a;font-weight:500;}
+.f-sub{font-size:9px;color:#5a7a63;margin-top:1px;}
+.f-inp{width:82px;padding:7px 10px;border:1.5px solid #c8e0d0;border-radius:9px;font-size:14px;text-align:right;background:#f2f8f5;color:#0d2b1a;font-family:inherit;}
+.f-inp:focus{outline:none;border-color:#3ecf8e;background:#fff;}
+.m-sv{width:100%;padding:13px;background:#3ecf8e;color:#0d2b1a;border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.ch-card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid #e0ebe5;}
+.ch-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.ch-tl{font-size:13px;font-weight:700;color:#0d2b1a;}
+.ch-un{font-size:11px;color:#5a7a63;}
+.ch-em{text-align:center;padding:24px;color:#bbb;font-size:12px;}
 /* PROFILE */
-.prof-hero{background:linear-gradient(135deg,var(--g1),var(--g2));padding:18px;}
-.prof-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
-.prof-av{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid rgba(255,255,255,.25);}
-.prof-name{font-size:16px;font-weight:700;color:#fff;}
-.prof-team{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;}
-.prof-tags{display:flex;gap:5px;margin-top:4px;}
-.ptag{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;}
-.ptag-ind{background:rgba(139,92,246,.3);color:#c4b5fd;}
-.ptag-team{background:rgba(59,130,246,.3);color:#93c5fd;}
-.bio-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
-.bio-item{background:rgba(255,255,255,.1);border-radius:9px;padding:8px;text-align:center;}
-.bio-val{font-size:14px;font-weight:700;color:#fff;}
-.bio-lbl{font-size:9px;color:rgba(255,255,255,.5);margin-top:2px;}
-.calc-sec{padding:13px 16px;}
-.calc-ttl{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.5px;margin-bottom:9px;}
-.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.cc{background:var(--bg);border-radius:11px;padding:10px 12px;}
-.cc-val{font-size:17px;font-weight:700;color:var(--text);}
-.cc-u{font-size:10px;color:var(--muted);font-weight:400;}
-.cc-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
-.cc-hint{font-size:9px;color:var(--acc);margin-top:2px;font-weight:500;}
-.official-sec{padding:0 16px 16px;}
-.off-card{background:var(--g1);border-radius:14px;padding:13px;}
-.off-title{font-size:11px;font-weight:700;color:rgba(255,255,255,.55);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.ph{background:linear-gradient(135deg,#0d2b1a,#1a4a2e);border-radius:18px;padding:16px;margin-bottom:12px;}
+.ph-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.ph-av{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid rgba(255,255,255,.25);flex-shrink:0;}
+.ph-nm{font-size:16px;font-weight:700;color:#fff;}
+.ph-tm{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;}
+.ptag{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;margin-top:4px;margin-right:4px;}
+.pti{background:rgba(139,92,246,.3);color:#c4b5fd;}
+.ptt{background:rgba(59,130,246,.3);color:#93c5fd;}
+.bg{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+.bi{background:rgba(255,255,255,.1);border-radius:9px;padding:8px;text-align:center;}
+.bi-v{font-size:14px;font-weight:700;color:#fff;}
+.bi-l{font-size:9px;color:rgba(255,255,255,.5);margin-top:2px;}
+.cc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.cc{background:#fff;border-radius:12px;padding:12px;border:1px solid #e0ebe5;}
+.cc-v{font-size:17px;font-weight:700;color:#0d2b1a;}
+.cc-u{font-size:10px;color:#5a7a63;font-weight:400;}
+.cc-l{font-size:10px;color:#5a7a63;margin-top:2px;}
+.cc-h{font-size:9px;color:#3ecf8e;margin-top:2px;font-weight:500;}
+.off-card{background:#0d2b1a;border-radius:14px;padding:13px;margin-bottom:12px;}
+.off-tl{font-size:11px;font-weight:700;color:rgba(255,255,255,.55);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 .off-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
-.off-label{font-size:11px;color:rgba(255,255,255,.5);}
-.off-vals{display:flex;align-items:center;gap:6px;}
-.off-from{font-size:11px;color:rgba(255,255,255,.4);}
-.off-arrow{font-size:9px;color:rgba(255,255,255,.3);}
+.off-lbl{font-size:11px;color:rgba(255,255,255,.5);}
+.off-v{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end;}
+.off-fr{font-size:11px;color:rgba(255,255,255,.4);}
 .off-to{font-size:13px;font-weight:700;color:#fff;}
-.off-diff{font-size:11px;font-weight:700;color:var(--acc);}
-.off-note{font-size:9px;color:rgba(255,255,255,.3);margin-top:6px;}
-
+.off-df{font-size:11px;font-weight:700;color:#3ecf8e;}
+.lg-btn{width:100%;padding:11px;background:none;border:1.5px solid #c8e0d0;border-radius:12px;font-size:13px;color:#5a7a63;cursor:pointer;font-family:inherit;font-weight:500;}
 /* RANK */
-.board-tabs{display:flex;background:var(--bg);border-bottom:1.5px solid var(--border);}
-.board-tab{flex:1;padding:10px;font-size:11px;font-weight:700;text-align:center;color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;}
-.board-tab.active{color:var(--g1);border-bottom-color:var(--g1);}
-.board-body{padding:12px 14px;}
-.board-item{background:var(--bg);border-radius:13px;padding:11px 13px;margin-bottom:8px;}
-.board-item.me{background:var(--light);border:1.5px solid var(--acc);}
-.board-item.gold{background:linear-gradient(135deg,#fef9ee,#fdf0d0);border:1.5px solid #e8c84a;}
-.board-item.silver{background:linear-gradient(135deg,#f6f8fb,#eaeff5);border:1.5px solid #b0bec5;}
-.board-item.bronze{background:linear-gradient(135deg,#fdf6f0,#fae8d8);border:1.5px solid #d4a574;}
+.bd-tabs{display:flex;background:#e8f0ec;border-radius:20px;padding:3px;gap:2px;margin-bottom:14px;}
+.bdtab{flex:1;padding:7px;border-radius:17px;font-size:12px;border:none;background:none;color:#5a7a63;cursor:pointer;font-family:inherit;font-weight:500;}
+.bdtab.on{background:#0d2b1a;color:#fff;}
+.bi-card{background:#fff;border-radius:13px;padding:11px 13px;margin-bottom:8px;border:1px solid #e0ebe5;}
+.bi-card.me{background:#d4f0e2;border-color:#3ecf8e;}
+.bi-card.gold{background:linear-gradient(135deg,#fef9ee,#fdf0d0);border-color:#e8c84a;}
+.bi-card.silver{background:#f6f8fb;border-color:#b0bec5;}
+.bi-card.bronze{background:linear-gradient(135deg,#fdf6f0,#fae8d8);border-color:#d4a574;}
 .bi-top{display:flex;align-items:center;gap:9px;margin-bottom:7px;}
-.bi-rank{font-size:18px;min-width:28px;}
+.bi-rk{font-size:18px;min-width:28px;}
 .bi-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
-.bi-name-wrap{flex:1;}
-.bi-name{font-size:13px;font-weight:700;color:var(--text);}
-.bi-team{font-size:10px;color:var(--muted);margin-top:1px;}
-.bi-streak{font-size:10px;color:var(--amber);font-weight:700;}
+.bi-nm{font-size:13px;font-weight:700;color:#0d2b1a;}
+.bi-tm{font-size:10px;color:#5a7a63;margin-top:1px;}
 .bi-data{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-.bi-metric{background:#fff;border-radius:9px;padding:7px 9px;}
-.bi-ml{font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px;}
-.bi-mr{display:flex;align-items:baseline;gap:3px;flex-wrap:wrap;}
-.bi-from{font-size:10px;color:#aaa;}
-.bi-arrow{font-size:9px;color:#aaa;}
-.bi-to{font-size:12px;font-weight:700;color:var(--text);}
-.bi-diff{font-size:10px;font-weight:700;color:var(--acc);}
-
+.bi-mt{background:#f2f8f5;border-radius:9px;padding:7px 9px;}
+.bi-ml{font-size:9px;color:#5a7a63;font-weight:700;margin-bottom:3px;}
+.bi-vr{display:flex;align-items:baseline;gap:3px;flex-wrap:wrap;}
+.bi-fr{font-size:10px;color:#aaa;}
+.bi-ar{font-size:9px;color:#aaa;}
+.bi-to{font-size:12px;font-weight:700;color:#0d2b1a;}
+.bi-df{font-size:10px;font-weight:700;color:#3ecf8e;}
+/* ADMIN */
+.adm-stl{font-size:13px;font-weight:700;color:#0d2b1a;margin-bottom:10px;margin-top:16px;}
+.adm-stl:first-child{margin-top:0;}
+.adm-sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;}
+.adm-s{background:#fff;border-radius:12px;padding:13px;text-align:center;border:1px solid #e0ebe5;}
+.adm-sv{font-size:26px;font-weight:700;}
+.adm-sl{font-size:11px;color:#5a7a63;margin-top:3px;}
+.adm-c{background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;border:1px solid #e0ebe5;}
+.adm-nm{font-size:13px;font-weight:700;color:#0d2b1a;}
+.adm-em{font-size:11px;color:#5a7a63;margin-top:1px;word-break:break-all;}
+.adm-mt{font-size:11px;color:#5a7a63;margin-top:3px;line-height:1.5;}
+.adm-ac{display:flex;gap:8px;margin-top:10px;}
+.adm-bg{flex:1;padding:8px;background:#3ecf8e;color:#0d2b1a;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.adm-br{flex:1;padding:8px;background:#fff;color:#ef4444;border:1.5px solid #fca5a5;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.adm-bo{width:100%;padding:8px;background:#f2f8f5;color:#0d2b1a;border:1.5px solid #c8e0d0;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;}
+.adm-pr{width:100%;padding:12px;background:#3ecf8e;color:#0d2b1a;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;}
+.adm-in{width:100%;padding:9px 12px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:14px;font-family:inherit;color:#0d2b1a;background:#f2f8f5;margin-bottom:8px;}
+.adm-in:focus{outline:none;border-color:#3ecf8e;background:#fff;}
+.adm-2c{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.adm-fl label{font-size:11px;font-weight:700;color:#5a7a63;display:block;margin-bottom:4px;}
+.adm-fl input{width:100%;padding:8px;border:1.5px solid #e0ebe5;border-radius:9px;font-size:13px;font-family:inherit;color:#0d2b1a;background:#f2f8f5;}
+.adm-fl input:focus{outline:none;border-color:#3ecf8e;background:#fff;}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.tg{background:#d1fae5;color:#065f46;}
+.ta{background:#fef3c7;color:#92400e;}
+/* REG */
+.rh{background:linear-gradient(160deg,#0d2b1a,#2d6a4f);border-radius:16px;padding:22px 18px 18px;text-align:center;width:100%;margin-bottom:12px;}
+.rh-logo{font-size:28px;margin-bottom:8px;}
+.rh-tl{font-size:17px;font-weight:900;color:#fff;}
+.rh-sb{font-size:11px;color:rgba(255,255,255,.6);margin-top:4px;}
+.steps{display:flex;align-items:center;gap:4px;margin-top:14px;justify-content:center;}
+.step{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+.step.a{background:#3ecf8e;color:#0d2b1a;}
+.step.d{background:rgba(255,255,255,.3);color:rgba(255,255,255,.8);}
+.step.t{background:rgba(255,255,255,.15);color:rgba(255,255,255,.4);}
+.sl{flex:1;height:1.5px;background:rgba(255,255,255,.2);max-width:28px;}
+.rb{background:#f2f8f5;border-radius:16px;padding:16px;width:100%;}
+.fg{margin-bottom:12px;}
+.fg label{font-size:11px;font-weight:700;color:#5a7a63;display:block;margin-bottom:4px;}
+.fi{width:100%;padding:10px 12px;border:1.5px solid #e0ebe5;border-radius:11px;font-size:14px;font-family:inherit;color:#0d2b1a;background:#fff;}
+.fi:focus{outline:none;border-color:#3ecf8e;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.gr-row{display:flex;gap:8px;}
+.gb{flex:1;padding:10px;border-radius:11px;border:1.5px solid #e0ebe5;background:#fff;font-size:13px;font-weight:700;color:#5a7a63;cursor:pointer;text-align:center;font-family:inherit;}
+.gb.on{border-color:#3ecf8e;background:#d4f0e2;color:#0d2b1a;}
+.type-btn{padding:12px 14px;border-radius:12px;border:1.5px solid #e0ebe5;background:#fff;display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:8px;width:100%;}
+.type-btn.on{border-color:#3ecf8e;background:#d4f0e2;}
+.tbc{width:18px;height:18px;border-radius:50%;border:2px solid #e0ebe5;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-left:auto;}
+.tbc.on{background:#3ecf8e;border-color:#3ecf8e;color:#fff;}
+.calc-bx{background:#e8f0ec;border-radius:12px;padding:12px;margin-bottom:12px;}
+.calc-rw{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;}
+.calc-v{font-size:16px;font-weight:700;color:#0d2b1a;}
+.calc-l{font-size:9px;color:#5a7a63;margin-top:2px;}
+.nb{background:#fff8e1;border-radius:10px;padding:10px 12px;font-size:11px;color:#856404;line-height:1.5;margin-bottom:12px;}
+.btn-nx{width:100%;padding:13px;background:#3ecf8e;color:#0d2b1a;border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px;}
+.btn-bk{width:100%;padding:11px;background:#fff;color:#5a7a63;border:1.5px solid #e0ebe5;border-radius:13px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;}
 /* MODAL */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
-.overlay.hidden{display:none;}
-.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:400px;max-height:86vh;display:flex;flex-direction:column;animation:slideUp .22s ease;}
-@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.modal-handle{width:34px;height:4px;background:#ddd;border-radius:2px;margin:11px auto 3px;flex-shrink:0;}
-.modal-title{font-size:15px;font-weight:700;color:var(--text);padding:7px 16px 9px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.modal-type-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
-.mtype-btn{flex:1;padding:10px;font-size:12px;font-weight:500;border:none;background:none;color:var(--muted);cursor:pointer;font-family:inherit;border-bottom:2.5px solid transparent;}
-.mtype-btn.active{color:var(--g1);border-bottom-color:var(--g1);}
-.modal-cats{display:flex;gap:5px;padding:9px 14px;overflow-x:auto;flex-shrink:0;}
-.modal-cats::-webkit-scrollbar{display:none;}
-.mcat-btn{padding:5px 12px;border-radius:20px;font-size:11px;border:1.5px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;font-family:inherit;white-space:nowrap;font-weight:500;flex-shrink:0;}
-.mcat-btn.active{background:var(--g1);color:#fff;border-color:var(--g1);}
-.serving-panel{background:var(--bg);border-radius:13px;margin:7px 14px;padding:11px;flex-shrink:0;}
-.sp-title{font-size:11px;color:var(--muted);margin-bottom:7px;font-weight:500;line-height:1.5;word-break:break-all;}
-.sp-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;}
-.sp-btn{padding:7px 0;border-radius:9px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;text-align:center;font-family:inherit;}
-.sp-btn.active{background:var(--g1);color:#fff;border-color:var(--g1);}
-.modal-list{flex:1;overflow-y:auto;padding:0 14px;}
-.modal-prod{display:flex;align-items:flex-start;gap:9px;padding:10px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;}
-.mp-icon{font-size:18px;width:28px;text-align:center;flex-shrink:0;margin-top:2px;}
-.mp-info{flex:1;min-width:0;}
-.mp-name{font-size:13px;font-weight:500;color:var(--text);line-height:1.4;word-break:break-all;}
-.mp-macro{font-size:10px;color:var(--muted);margin-top:2px;}
-.mp-cat{display:inline-block;font-size:9px;padding:2px 6px;border-radius:10px;margin-top:2px;font-weight:500;}
-.pp-pro{background:#d1fae5;color:#065f46;}
-.pp-body{background:#ede9fe;color:#4c1d95;}
-.pp-xs{background:#fef3c7;color:#92400e;}
-.mp-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px;}
-.mp-check.on{background:var(--acc);border-color:var(--acc);color:#fff;}
-.custom-panel{padding:12px 14px;flex:1;overflow-y:auto;}
-.custom-panel label{font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;}
-.custom-input{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:#fff;color:var(--text);font-family:inherit;margin-bottom:10px;}
-.custom-row-2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px;}
-.custom-row-2 .custom-input{margin-bottom:0;}
-.modal-confirm{margin:9px 14px 14px;padding:12px;border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;width:calc(100% - 28px);font-family:inherit;background:#ccc;color:#fff;transition:background .2s;flex-shrink:0;}
-.modal-confirm.ready{background:var(--acc);color:var(--g1);}
-
-/* TOAST */
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--g1);color:#fff;font-size:13px;font-weight:500;padding:10px 20px;border-radius:28px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
-.toast.show{opacity:1;}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
+.ov.h{display:none;}
+.modal{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:430px;max-height:88vh;display:flex;flex-direction:column;animation:su .22s ease;}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mh{width:34px;height:4px;background:#ddd;border-radius:2px;margin:12px auto 4px;flex-shrink:0;}
+.mt{font-size:15px;font-weight:700;color:#0d2b1a;padding:8px 16px 10px;border-bottom:1px solid #e0ebe5;flex-shrink:0;}
+.mtt{display:flex;border-bottom:1px solid #e0ebe5;flex-shrink:0;}
+.mtb{flex:1;padding:10px;font-size:12px;font-weight:500;border:none;background:none;color:#5a7a63;cursor:pointer;font-family:inherit;border-bottom:2.5px solid transparent;}
+.mtb.on{color:#0d2b1a;border-bottom-color:#0d2b1a;}
+.mcs{display:flex;gap:5px;padding:9px 14px;overflow-x:auto;flex-shrink:0;}
+.mcs::-webkit-scrollbar{display:none;}
+.mcb{padding:5px 12px;border-radius:20px;font-size:11px;border:1.5px solid #e0ebe5;background:#fff;color:#5a7a63;cursor:pointer;font-family:inherit;white-space:nowrap;font-weight:500;flex-shrink:0;}
+.mcb.on{background:#0d2b1a;color:#fff;border-color:#0d2b1a;}
+.sp{background:#f2f8f5;border-radius:13px;margin:7px 14px;padding:11px;flex-shrink:0;}
+.sp-t{font-size:11px;color:#5a7a63;margin-bottom:7px;font-weight:500;line-height:1.5;word-break:break-all;}
+.sp-g{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;}
+.sp-b{padding:7px 0;border-radius:9px;border:1.5px solid #e0ebe5;background:#fff;font-size:12px;font-weight:700;color:#5a7a63;cursor:pointer;text-align:center;font-family:inherit;}
+.sp-b.on{background:#0d2b1a;color:#fff;border-color:#0d2b1a;}
+.ml{flex:1;overflow-y:auto;padding:0 14px;}
+.mp{display:flex;align-items:flex-start;gap:9px;padding:10px 0;border-bottom:1px solid #f0f0f0;cursor:pointer;}
+.mp-ic{font-size:18px;width:28px;text-align:center;flex-shrink:0;margin-top:2px;}
+.mp-inf{flex:1;min-width:0;}
+.mp-nm{font-size:13px;font-weight:500;color:#0d2b1a;line-height:1.4;word-break:break-all;}
+.mp-mc{font-size:10px;color:#5a7a63;margin-top:2px;}
+.mp-ct{display:inline-block;font-size:9px;padding:2px 6px;border-radius:10px;margin-top:2px;font-weight:500;}
+.cpp{background:#d1fae5;color:#065f46;}
+.cpb{background:#ede9fe;color:#4c1d95;}
+.cpx{background:#fef3c7;color:#92400e;}
+.mp-ck{width:22px;height:22px;border-radius:50%;border:2px solid #e0ebe5;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:2px;}
+.mp-ck.on{background:#3ecf8e;border-color:#3ecf8e;color:#fff;}
+.cpanel{padding:12px 14px;flex:1;overflow-y:auto;}
+.cpanel label{font-size:11px;font-weight:700;color:#5a7a63;display:block;margin-bottom:4px;}
+.ci{width:100%;padding:9px 11px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:14px;background:#f2f8f5;color:#0d2b1a;font-family:inherit;margin-bottom:10px;}
+.ci:focus{outline:none;border-color:#3ecf8e;background:#fff;}
+.c2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px;}
+.c2 .ci{margin-bottom:0;}
+.mc{margin:9px 14px 14px;padding:12px;border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;width:calc(100% - 28px);font-family:inherit;background:#ccc;color:#fff;transition:background .2s;flex-shrink:0;}
+.mc.on{background:#3ecf8e;color:#0d2b1a;}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#0d2b1a;color:#fff;font-size:13px;font-weight:500;padding:10px 20px;border-radius:28px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+.toast.on{opacity:1;}
 </style>
 </head>
 <body>
-<div class="phone" id="app-root">
-<div id="status-msg"></div>
-
-<!-- ① LOGIN -->
-<div id="login-view">
-  <div class="lv-logo">🌿</div>
-  <div class="lv-title">曲線管理比賽</div>
-  <div class="lv-sub">此服務僅限報名課程之學員使用。<br>請以 Google 帳號登入，等候老師審核後即可使用。</div>
-  <button class="google-btn" id="google-login-btn">
-    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-    使用 Google 帳號登入
-  </button>
-  <div class="lv-note">⏳ 登入後需等候老師加入白名單</div>
-</div>
-
-<!-- ② PENDING -->
-<div id="pending-view">
-  <div class="pv-icon">⏳</div>
-  <div class="pv-title">等候審核中</div>
-  <div class="pv-sub">你的報名已收到！<br>老師審核通過後，你就可以使用全部功能。<br><br>通常在 24 小時內完成審核。</div>
-  <button class="pv-logout" id="pending-logout">登出</button>
-</div>
-
-<!-- ③ REGISTRATION -->
-<div id="reg-view">
-  <div class="reg-hero">
-    <div class="reg-logo">🌿</div>
-    <div class="reg-title">填寫報名資料</div>
-    <div class="reg-sub">只需填一次，開始你的蛻變旅程</div>
-    <div class="steps">
-      <div class="step active" id="step-1">1</div>
-      <div class="step-line"></div>
-      <div class="step todo" id="step-2">2</div>
-      <div class="step-line"></div>
-      <div class="step todo" id="step-3">3</div>
-    </div>
-  </div>
-  <div class="reg-body" id="reg-body">
-    <!-- rendered by JS -->
-  </div>
-</div>
-
-<!-- ④ MAIN APP -->
-<div id="app-view">
-  <div class="topnav">
-    <div class="tn-title">🌿 曲線管理比賽</div>
-    <div class="tn-badge" id="app-week-badge">第 1 週</div>
+<div id="app">
+  <!-- LOGIN -->
+  <div class="fv on" id="fv-login">
+    <div class="lv-logo">🌿</div>
+    <div class="lv-title">曲線管理比賽</div>
+    <div class="lv-sub">此服務僅限報名課程之學員使用。<br>請以 Google 帳號登入，等候老師審核後即可使用。</div>
+    <button class="google-btn" id="login-btn">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      使用 Google 帳號登入
+    </button>
+    <div class="lv-note">⏳ 登入後需等候老師審核</div>
   </div>
 
-  <!-- HOME -->
-  <div class="screen" id="screen-home">
-    <div class="hero">
-      <div class="hero-greet">早安</div>
-      <div class="hero-name" id="hero-name">— 👋</div>
-      <div class="hero-stats">
-        <div class="hs"><div class="hs-val" id="h-weight">—</div><div class="hs-lbl">體重 kg</div><div class="hs-ch" id="h-wdiff">—</div></div>
-        <div class="hs"><div class="hs-val" id="h-fat">—</div><div class="hs-lbl">體脂 %</div><div class="hs-ch" id="h-fdiff">—</div></div>
-        <div class="hs"><div class="hs-val" id="h-waist">—</div><div class="hs-lbl">腰圍 cm</div><div class="hs-ch" id="h-waistdiff">—</div></div>
-      </div>
-    </div>
-    <div class="sec-title">今日目標達成率</div>
-    <div class="goals-grid">
-      <div class="goal-card">
-        <div class="goal-ring"><svg width="42" height="42" viewBox="0 0 42 42"><circle class="ring-bg" cx="21" cy="21" r="17"/><circle class="ring-fg" cx="21" cy="21" r="17" stroke="#3ecf8e" stroke-dasharray="107" stroke-dashoffset="60" id="ring-pro"/></svg><div class="ring-pct" id="ring-pro-pct">44%</div></div>
-        <div class="goal-info"><div class="gn">蛋白質</div><div class="gv" id="goal-pro">22g</div><div class="gt">目標 50g</div></div>
-      </div>
-      <div class="goal-card">
-        <div class="goal-ring"><svg width="42" height="42" viewBox="0 0 42 42"><circle class="ring-bg" cx="21" cy="21" r="17"/><circle class="ring-fg" cx="21" cy="21" r="17" stroke="#3b82f6" stroke-dasharray="107" stroke-dashoffset="54" id="ring-water"/></svg><div class="ring-pct" id="ring-water-pct">50%</div></div>
-        <div class="goal-info"><div class="gn">喝水</div><div class="gv" id="goal-water">1000ml</div><div class="gt">目標 2000ml</div></div>
-      </div>
-      <div class="goal-card">
-        <div class="goal-ring"><svg width="42" height="42" viewBox="0 0 42 42"><circle class="ring-bg" cx="21" cy="21" r="17"/><circle class="ring-fg" cx="21" cy="21" r="17" stroke="#f59e0b" stroke-dasharray="107" stroke-dashoffset="27" id="ring-kcal"/></svg><div class="ring-pct" id="ring-kcal-pct">75%</div></div>
-        <div class="goal-info"><div class="gn">熱量控制</div><div class="gv" id="goal-kcal">900</div><div class="gt">上限 1200</div></div>
-      </div>
-      <div class="goal-card">
-        <div class="goal-ring"><svg width="42" height="42" viewBox="0 0 42 42"><circle class="ring-bg" cx="21" cy="21" r="17"/><circle class="ring-fg" cx="21" cy="21" r="17" stroke="#8b5cf6" stroke-dasharray="107" stroke-dashoffset="21" id="ring-ex"/></svg><div class="ring-pct" id="ring-ex-pct">80%</div></div>
-        <div class="goal-info"><div class="gn">運動</div><div class="gv" id="goal-ex">24分</div><div class="gt">目標 30分</div></div>
-      </div>
-    </div>
-    <div class="rank-card">
-      <div class="rc-left"><div class="rc-medal">🏅</div><div><div class="rc-rank" id="h-rank">—</div><div class="rc-sub">共 <span id="h-total">—</span> 位參賽者</div></div></div>
-      <div class="rc-right"><div class="rc-stat" id="h-fat-diff">—</div><div class="rc-days" id="h-streak">—</div></div>
-    </div>
+  <!-- PENDING -->
+  <div class="fv" id="fv-pending">
+    <div style="font-size:48px;margin-bottom:16px;">⏳</div>
+    <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:8px;">等候審核中</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.65);text-align:center;line-height:1.7;">你的報名已收到！<br>老師審核通過後即可使用全部功能。<br><br>通常在 24 小時內完成。</div>
+    <button id="pending-logout" style="margin-top:24px;padding:10px 22px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:12px;color:rgba(255,255,255,.8);font-size:13px;cursor:pointer;font-family:inherit;">登出</button>
   </div>
 
-  <!-- INPUT -->
-  <div class="screen hidden" id="screen-input" style="padding-bottom:0;display:flex;flex-direction:column;">
-    <div style="flex:1;overflow-y:auto;padding:16px 16px 8px;">
-      <div class="inp-section">
-        <div class="is-head"><div class="is-icon">🍽️</div><div><div class="is-title">飲食紀錄</div><div class="is-sub">早中晚餐及點心</div></div></div>
-        <div class="meal-block"><div class="mb-head"><div class="mb-left"><div class="mb-icon">🌅</div><div><div class="mb-name">早餐</div><div class="mb-kcal" id="mkcal-0">0 大卡</div></div></div><button class="mb-add" onclick="openModal(0)">+</button></div><div class="mb-items" id="mitems-0"><div class="empty-meal">點「+」新增</div></div></div>
-        <div class="meal-block"><div class="mb-head"><div class="mb-left"><div class="mb-icon">☀️</div><div><div class="mb-name">午餐</div><div class="mb-kcal" id="mkcal-1">0 大卡</div></div></div><button class="mb-add" onclick="openModal(1)">+</button></div><div class="mb-items" id="mitems-1"><div class="empty-meal">點「+」新增</div></div></div>
-        <div class="meal-block"><div class="mb-head"><div class="mb-left"><div class="mb-icon">🌙</div><div><div class="mb-name">晚餐</div><div class="mb-kcal" id="mkcal-2">0 大卡</div></div></div><button class="mb-add" onclick="openModal(2)">+</button></div><div class="mb-items" id="mitems-2"><div class="empty-meal">點「+」新增</div></div></div>
-        <div class="meal-block"><div class="mb-head"><div class="mb-left"><div class="mb-icon">🍎</div><div><div class="mb-name">點心</div><div class="mb-kcal" id="mkcal-3">0 大卡</div></div></div><button class="mb-add" onclick="openModal(3)">+</button></div><div class="mb-items" id="mitems-3"><div class="empty-meal">點「+」新增</div></div></div>
+  <!-- REG -->
+  <div class="fv" id="fv-reg">
+    <div class="rh">
+      <div class="rh-logo">🌿</div>
+      <div class="rh-tl">填寫報名資料</div>
+      <div class="rh-sb">只需填一次</div>
+      <div class="steps">
+        <div class="step a" id="st1">1</div><div class="sl"></div>
+        <div class="step t" id="st2">2</div><div class="sl"></div>
+        <div class="step t" id="st3">3</div>
       </div>
-      <div class="inp-section">
-        <div class="is-head"><div class="is-icon">💧</div><div><div class="is-title">喝水紀錄</div><div class="is-sub">目標 2000ml</div></div></div>
-        <div class="water-row"><div class="water-num" id="waterNum">0</div><div class="water-unit">ml</div><div class="water-btns"><button class="wbtn" onclick="addWater(-250)">－250</button><button class="wbtn" onclick="addWater(250)">＋250</button></div></div>
+    </div>
+    <div class="rb" id="reg-body"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="topbar" id="main-top" style="display:none;">
+    <div class="tb-title">🌿 曲線管理比賽</div>
+    <div class="tb-badge" id="week-b">第 1 週</div>
+  </div>
+  <div class="pages" id="main-pages" style="display:none;">
+
+    <!-- HOME -->
+    <div class="page on" id="pg-home">
+      <div class="hero">
+        <div class="hero-gr" id="h-gr">早安</div>
+        <div class="hero-nm" id="h-nm">— 👋</div>
+        <div class="hs-grid">
+          <div class="hs"><div class="hs-val" id="h-w">—</div><div class="hs-lbl">體重 kg</div><div class="hs-ch" id="h-wc"> </div></div>
+          <div class="hs"><div class="hs-val" id="h-f">—</div><div class="hs-lbl">體脂 %</div><div class="hs-ch" id="h-fc"> </div></div>
+          <div class="hs"><div class="hs-val" id="h-wt">—</div><div class="hs-lbl">腰圍 cm</div><div class="hs-ch" id="h-wtc"> </div></div>
+        </div>
       </div>
-      <div class="inp-section">
-        <div class="is-head"><div class="is-icon">🏃</div><div><div class="is-title">運動紀錄</div><div class="is-sub">今天做了什麼？</div></div></div>
+      <div class="goals-grid">
+        <div class="gc"><div class="gr"><svg viewBox="0 0 42 42"><circle class="rbg" cx="21" cy="21" r="17"/><circle class="rfg" cx="21" cy="21" r="17" stroke="#3ecf8e" stroke-dasharray="107" id="rp1"/></svg><div class="rpct" id="rp1t">0%</div></div><div><div class="gi-l">蛋白質</div><div class="gi-v" id="gv1">0g</div><div class="gi-t">目標 50g</div></div></div>
+        <div class="gc"><div class="gr"><svg viewBox="0 0 42 42"><circle class="rbg" cx="21" cy="21" r="17"/><circle class="rfg" cx="21" cy="21" r="17" stroke="#3b82f6" stroke-dasharray="107" id="rp2"/></svg><div class="rpct" id="rp2t">0%</div></div><div><div class="gi-l">喝水</div><div class="gi-v" id="gv2">0ml</div><div class="gi-t">目標 2000ml</div></div></div>
+        <div class="gc"><div class="gr"><svg viewBox="0 0 42 42"><circle class="rbg" cx="21" cy="21" r="17"/><circle class="rfg" cx="21" cy="21" r="17" stroke="#f59e0b" stroke-dasharray="107" id="rp3"/></svg><div class="rpct" id="rp3t">0%</div></div><div><div class="gi-l">熱量控制</div><div class="gi-v" id="gv3">0</div><div class="gi-t">上限 1200</div></div></div>
+        <div class="gc"><div class="gr"><svg viewBox="0 0 42 42"><circle class="rbg" cx="21" cy="21" r="17"/><circle class="rfg" cx="21" cy="21" r="17" stroke="#8b5cf6" stroke-dasharray="107" id="rp4"/></svg><div class="rpct" id="rp4t">0%</div></div><div><div class="gi-l">運動</div><div class="gi-v" id="gv4">0分</div><div class="gi-t">目標 30分</div></div></div>
+      </div>
+      <div class="rank-s">
+        <div style="display:flex;align-items:center;gap:10px;"><div style="font-size:24px;">🏅</div><div><div style="font-size:19px;font-weight:900;color:#fff;" id="h-rk">—</div><div style="font-size:10px;color:rgba(255,255,255,.5);">共 <span id="h-tot">—</span> 位參賽者</div></div></div>
+        <div style="text-align:right;"><div style="font-size:12px;font-weight:700;color:#3ecf8e;" id="h-fd">—</div><div style="font-size:10px;color:rgba(255,255,255,.4);" id="h-sk">—</div></div>
+      </div>
+    </div>
+
+    <!-- INPUT -->
+    <div class="page" id="pg-input">
+      <div class="is">
+        <div class="is-hd"><div class="is-ic">🍽️</div><div><div class="is-tl">飲食紀錄</div><div class="is-sb">早中晚餐及點心</div></div></div>
+        <div class="mb"><div class="mb-hd"><div class="mb-lf"><div style="font-size:15px;">🌅</div><div><div class="mb-nm">早餐</div><div class="mb-kc" id="mk0">0 大卡</div></div></div><button class="mb-add" onclick="openModal(0)">+</button></div><div class="mi-list" id="ml0"><div class="em">點「+」新增</div></div></div>
+        <div class="mb"><div class="mb-hd"><div class="mb-lf"><div style="font-size:15px;">☀️</div><div><div class="mb-nm">午餐</div><div class="mb-kc" id="mk1">0 大卡</div></div></div><button class="mb-add" onclick="openModal(1)">+</button></div><div class="mi-list" id="ml1"><div class="em">點「+」新增</div></div></div>
+        <div class="mb"><div class="mb-hd"><div class="mb-lf"><div style="font-size:15px;">🌙</div><div><div class="mb-nm">晚餐</div><div class="mb-kc" id="mk2">0 大卡</div></div></div><button class="mb-add" onclick="openModal(2)">+</button></div><div class="mi-list" id="ml2"><div class="em">點「+」新增</div></div></div>
+        <div class="mb"><div class="mb-hd"><div class="mb-lf"><div style="font-size:15px;">🍎</div><div><div class="mb-nm">點心</div><div class="mb-kc" id="mk3">0 大卡</div></div></div><button class="mb-add" onclick="openModal(3)">+</button></div><div class="mi-list" id="ml3"><div class="em">點「+」新增</div></div></div>
+      </div>
+      <div class="is">
+        <div class="is-hd"><div class="is-ic">💧</div><div><div class="is-tl">喝水紀錄</div><div class="is-sb">目標 2000ml</div></div></div>
+        <div class="wr"><div class="wn" id="wn">0</div><div class="wu">ml</div><div class="wbs"><button class="wb" onclick="addWater(-250)">－250</button><button class="wb" onclick="addWater(250)">＋250</button></div></div>
+      </div>
+      <div class="is">
+        <div class="is-hd"><div class="is-ic">🏃</div><div><div class="is-tl">運動紀錄</div></div></div>
         <div class="ex-grid">
           <div class="ex-item" onclick="selEx(this,'有氧運動')"><span class="ei">🚴</span>有氧運動</div>
           <div class="ex-item" onclick="selEx(this,'重量訓練')"><span class="ei">🏋️</span>重量訓練</div>
           <div class="ex-item" onclick="selEx(this,'瑜伽伸展')"><span class="ei">🧘</span>瑜伽伸展</div>
           <div class="ex-item" onclick="selEx(this,'步行散步')"><span class="ei">🚶</span>步行散步</div>
         </div>
-        <div class="ex-dur"><label>時間</label><input type="number" id="ex-min" placeholder="30" min="0"><span>分鐘</span></div>
+        <div class="ex-dur"><label>時間</label><input type="number" id="ex-min" placeholder="30" min="0"><span style="font-size:12px;color:#5a7a63;">分鐘</span></div>
       </div>
-      <div class="inp-section">
-        <div class="is-head"><div class="is-icon">😴</div><div><div class="is-title">睡眠</div><div class="is-sub">充足睡眠有助脂肪代謝</div></div></div>
-        <div class="sleep-row"><label>睡眠時數</label><input type="range" min="4" max="12" step="0.5" value="7" id="sleep-slider" oninput="document.getElementById('sleep-v').textContent=this.value"><div class="sleep-val" id="sleep-v">7</div><span style="font-size:11px;color:var(--muted);">hr</span></div>
+      <div class="is">
+        <div class="is-hd"><div class="is-ic">😴</div><div><div class="is-tl">睡眠時數</div></div></div>
+        <div class="sl-row"><label>睡眠</label><input type="range" min="4" max="12" step="0.5" value="7" id="sl-in" oninput="document.getElementById('sl-v').textContent=this.value"><div class="sl-val" id="sl-v">7</div><span style="font-size:11px;color:#5a7a63;">hr</span></div>
       </div>
-      <div class="inp-section">
-        <div class="is-head"><div class="is-icon">💬</div><div><div class="is-title">今日狀態</div><div class="is-sub">身體與情緒感受</div></div></div>
+      <div class="is">
+        <div class="is-hd"><div class="is-ic">💬</div><div><div class="is-tl">今日狀態</div></div></div>
         <div class="mood-row">
           <div class="mood-btn" onclick="selMood(this,1)"><span class="mi2">😔</span>不好</div>
           <div class="mood-btn" onclick="selMood(this,2)"><span class="mi2">😐</span>普通</div>
-          <div class="mood-btn sel" onclick="selMood(this,3)"><span class="mi2">🙂</span>還可以</div>
+          <div class="mood-btn on" onclick="selMood(this,3)"><span class="mi2">🙂</span>還可以</div>
           <div class="mood-btn" onclick="selMood(this,4)"><span class="mi2">😄</span>很好</div>
           <div class="mood-btn" onclick="selMood(this,5)"><span class="mi2">🔥</span>超棒</div>
         </div>
-        <textarea class="note-ta" id="daily-note" placeholder="今天有什麼感受？（選填）"></textarea>
+        <textarea class="note-ta" id="dn" placeholder="備注（選填）"></textarea>
       </div>
+      <button class="sv-btn" onclick="saveLog()">💾 儲存今日紀錄</button>
+      <div class="sv-st" id="sv-st">尚未儲存</div>
     </div>
-    <div class="save-bar">
-      <button class="save-main-btn" onclick="saveDailyLog()">💾 儲存今日紀錄</button>
-      <div class="save-status" id="save-status">尚未儲存</div>
-    </div>
-  </div>
 
-  <!-- MEASURE -->
-  <div class="screen hidden" id="screen-measure">
-    <div class="meas-tabs"><button class="mtab active" onclick="setMeasTab('log',this)">今日量測</button><button class="mtab" onclick="setMeasTab('trend',this)">趨勢圖</button></div>
-    <div id="meas-log">
-      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">今日體態照片</div>
-      <div class="photo-row">
-        <div class="ps"><div class="ps-icon">📸</div><div class="ps-lbl">正面</div></div>
-        <div class="ps"><div class="ps-icon">📸</div><div class="ps-lbl">側面</div></div>
-        <div class="ps"><div class="ps-icon">📸</div><div class="ps-lbl">背面</div></div>
+    <!-- MEASURE -->
+    <div class="page" id="pg-measure">
+      <div class="m-tabs"><button class="mtab on" onclick="setMT('log',this)">今日量測</button><button class="mtab" onclick="setMT('trend',this)">趨勢圖</button></div>
+      <div id="mt-log">
+        <div style="font-size:13px;font-weight:700;color:#0d2b1a;margin-bottom:12px;">今日體態照片</div>
+        <div class="ph-row">
+          <div class="ps"><div style="font-size:22px;">📸</div><div style="font-size:10px;color:#5a7a63;font-weight:500;">正面</div></div>
+          <div class="ps"><div style="font-size:22px;">📸</div><div style="font-size:10px;color:#5a7a63;font-weight:500;">側面</div></div>
+          <div class="ps"><div style="font-size:22px;">📸</div><div style="font-size:10px;color:#5a7a63;font-weight:500;">背面</div></div>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:#0d2b1a;margin-bottom:12px;">身體數據</div>
+        <div class="f-list">
+          <div class="f-row"><div><div class="f-lbl">體重</div><div class="f-sub">kg</div></div><input class="f-inp" id="fm-w" type="number" step="0.1" placeholder="—"></div>
+          <div class="f-row"><div><div class="f-lbl">體脂率</div><div class="f-sub">%</div></div><input class="f-inp" id="fm-f" type="number" step="0.1" placeholder="—"></div>
+          <div class="f-row"><div><div class="f-lbl">肌肉量</div><div class="f-sub">kg</div></div><input class="f-inp" id="fm-m" type="number" step="0.1" placeholder="—"></div>
+          <div class="f-row"><div><div class="f-lbl">內臟脂肪</div><div class="f-sub">等級</div></div><input class="f-inp" id="fm-v" type="number" step="1" placeholder="—"></div>
+          <div class="f-row"><div><div class="f-lbl">腰圍</div><div class="f-sub">cm</div></div><input class="f-inp" id="fm-wt" type="number" step="0.5" placeholder="—"></div>
+          <div class="f-row"><div><div class="f-lbl">臀圍</div><div class="f-sub">cm</div></div><input class="f-inp" id="fm-h" type="number" step="0.5" placeholder="—"></div>
+          <div class="f-row"><div><div class="f-lbl">大腿圍</div><div class="f-sub">cm</div></div><input class="f-inp" id="fm-t" type="number" step="0.5" placeholder="—"></div>
+          <div class="f-row"><div><div class="f-lbl">上臂圍</div><div class="f-sub">cm</div></div><input class="f-inp" id="fm-a" type="number" step="0.5" placeholder="—"></div>
+        </div>
+        <button class="m-sv" onclick="saveMeas()">儲存今日量測 ✓</button>
       </div>
-      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">身體數據</div>
-      <div class="form-list">
-        <div class="form-row"><div><div class="form-label">體重</div><div class="form-sub">kg</div></div><input class="form-input" id="hm-weight" type="number" step="0.1" placeholder="—"></div>
-        <div class="form-row"><div><div class="form-label">體脂率</div><div class="form-sub">%</div></div><input class="form-input" id="hm-fat" type="number" step="0.1" placeholder="—"></div>
-        <div class="form-row"><div><div class="form-label">肌肉量</div><div class="form-sub">kg</div></div><input class="form-input" id="hm-muscle" type="number" step="0.1" placeholder="—"></div>
-        <div class="form-row"><div><div class="form-label">內臟脂肪</div><div class="form-sub">等級</div></div><input class="form-input" id="hm-visceral" type="number" step="1" placeholder="—"></div>
-        <div class="form-row"><div><div class="form-label">腰圍</div><div class="form-sub">cm</div></div><input class="form-input" id="hm-waist" type="number" step="0.5" placeholder="—"></div>
-        <div class="form-row"><div><div class="form-label">臀圍</div><div class="form-sub">cm</div></div><input class="form-input" id="hm-hip" type="number" step="0.5" placeholder="—"></div>
-        <div class="form-row"><div><div class="form-label">大腿圍</div><div class="form-sub">cm</div></div><input class="form-input" id="hm-thigh" type="number" step="0.5" placeholder="—"></div>
-        <div class="form-row"><div><div class="form-label">上臂圍</div><div class="form-sub">cm</div></div><input class="form-input" id="hm-arm" type="number" step="0.5" placeholder="—"></div>
+      <div id="mt-trend" style="display:none;">
+        <div class="ch-card"><div class="ch-hd"><div class="ch-tl">體重趨勢</div><div class="ch-un">kg</div></div><div id="cht-w"><div class="ch-em">量測後自動顯示</div></div></div>
+        <div class="ch-card"><div class="ch-hd"><div class="ch-tl">體脂率趨勢</div><div class="ch-un">%</div></div><div id="cht-f"><div class="ch-em">量測後自動顯示</div></div></div>
+        <div class="ch-card"><div class="ch-hd"><div class="ch-tl">腰圍趨勢</div><div class="ch-un">cm</div></div><div id="cht-wt"><div class="ch-em">量測後自動顯示</div></div></div>
       </div>
-      <button class="meas-save" onclick="saveHomeMeasurement()">儲存今日量測 ✓</button>
     </div>
-    <div id="meas-trend" style="display:none;">
-      <div class="trend-card"><div class="tc-hdr"><div class="tc-ttl">體重趨勢</div><div class="tc-unit">kg（居家量測）</div></div><div class="tc-bars" id="trend-weight-bars"></div><div class="tc-lbls" id="trend-weight-lbls"></div></div>
-      <div class="trend-card"><div class="tc-hdr"><div class="tc-ttl">體脂率趨勢</div><div class="tc-unit">%（居家量測）</div></div><div class="tc-bars" id="trend-fat-bars"></div><div class="tc-lbls" id="trend-fat-lbls"></div></div>
-      <div class="trend-card"><div class="tc-hdr"><div class="tc-ttl">腰圍趨勢</div><div class="tc-unit">cm（居家量測）</div></div><div class="tc-bars" id="trend-waist-bars"></div><div class="tc-lbls" id="trend-waist-lbls"></div></div>
-    </div>
-  </div>
 
-  <!-- PROFILE -->
-  <div class="screen hidden" id="screen-profile">
-    <div class="prof-hero">
-      <div class="prof-top">
-        <div class="prof-av" id="prof-av">👤</div>
-        <div>
-          <div class="prof-name" id="prof-name">—</div>
-          <div class="prof-team" id="prof-team">—</div>
-          <div class="prof-tags" id="prof-tags"></div>
+    <!-- PROFILE -->
+    <div class="page" id="pg-profile">
+      <div class="ph">
+        <div class="ph-top">
+          <div class="ph-av" id="pf-av">👤</div>
+          <div><div class="ph-nm" id="pf-nm">—</div><div class="ph-tm" id="pf-tm">—</div><div id="pf-tags"></div></div>
+        </div>
+        <div class="bg">
+          <div class="bi"><div class="bi-v" id="pf-h">—</div><div class="bi-l">身高 cm</div></div>
+          <div class="bi"><div class="bi-v" id="pf-a">—</div><div class="bi-l">年齡</div></div>
+          <div class="bi"><div class="bi-v" id="pf-g">—</div><div class="bi-l">性別</div></div>
         </div>
       </div>
-      <div class="bio-grid">
-        <div class="bio-item"><div class="bio-val" id="bio-height">—</div><div class="bio-lbl">身高 cm</div></div>
-        <div class="bio-item"><div class="bio-val" id="bio-age">—</div><div class="bio-lbl">年齡</div></div>
-        <div class="bio-item"><div class="bio-val" id="bio-gender">—</div><div class="bio-lbl">性別</div></div>
+      <div style="font-size:11px;font-weight:700;color:#5a7a63;letter-spacing:.5px;margin-bottom:9px;">健康計算數值</div>
+      <div class="cc-grid">
+        <div class="cc"><div class="cc-v" id="cc-bmi">—</div><div class="cc-l">BMI</div><div class="cc-h" id="cc-bmi-l">—</div></div>
+        <div class="cc"><div class="cc-v" id="cc-bmr">—<span class="cc-u"> kcal</span></div><div class="cc-l">基礎代謝 BMR</div><div class="cc-h">每日最低需求</div></div>
+        <div class="cc"><div class="cc-v" id="cc-tdee">—<span class="cc-u"> kcal</span></div><div class="cc-l">TDEE</div><div class="cc-h">每日總消耗</div></div>
+        <div class="cc"><div class="cc-v" id="cc-tgt">—<span class="cc-u"> kcal</span></div><div class="cc-l">建議攝取上限</div><div class="cc-h">TDEE × 0.8</div></div>
       </div>
-    </div>
-    <div class="calc-sec">
-      <div class="calc-ttl">健康計算數值</div>
-      <div class="calc-grid">
-        <div class="cc"><div class="cc-val" id="cc-bmi">—</div><div class="cc-lbl">BMI</div><div class="cc-hint" id="cc-bmi-lbl">—</div></div>
-        <div class="cc"><div class="cc-val" id="cc-bmr">—<span class="cc-u"> kcal</span></div><div class="cc-lbl">基礎代謝 BMR</div><div class="cc-hint">每日最低需求</div></div>
-        <div class="cc"><div class="cc-val" id="cc-tdee">—<span class="cc-u"> kcal</span></div><div class="cc-lbl">每日總消耗 TDEE</div><div class="cc-hint">輕度活動量</div></div>
-        <div class="cc"><div class="cc-val" id="cc-target">—<span class="cc-u"> kcal</span></div><div class="cc-lbl">建議攝取上限</div><div class="cc-hint">TDEE × 0.8 減脂</div></div>
-      </div>
-    </div>
-    <div class="official-sec">
       <div class="off-card">
-        <div class="off-title">🏅 官方量測數據 <span style="margin-left:auto;font-size:9px;background:rgba(255,200,0,.2);color:#ffd700;padding:2px 8px;border-radius:10px;">競賽依據</span></div>
-        <div id="official-data">
-          <div style="font-size:12px;color:rgba(255,255,255,.4);text-align:center;padding:8px 0;">尚無官方量測數據</div>
-        </div>
-        <div class="off-note">最終成績以結賽官方量測為準</div>
+        <div class="off-tl">🏅 官方量測數據 <span style="margin-left:auto;font-size:9px;background:rgba(255,200,0,.2);color:#ffd700;padding:2px 8px;border-radius:10px;">競賽依據</span></div>
+        <div id="off-data"><div style="font-size:12px;color:rgba(255,255,255,.4);text-align:center;padding:8px 0;">尚無官方量測數據</div></div>
+        <div style="font-size:9px;color:rgba(255,255,255,.3);margin-top:6px;">最終成績以結賽官方量測為準</div>
       </div>
+      <button class="lg-btn" onclick="signOut()">登出</button>
     </div>
-    <div style="padding:0 16px 16px;">
-      <button onclick="signOut()" style="width:100%;padding:11px;background:none;border:1.5px solid var(--border);border-radius:12px;font-size:13px;color:var(--muted);cursor:pointer;font-family:inherit;font-weight:500;">登出</button>
+
+    <!-- RANK -->
+    <div class="page" id="pg-rank">
+      <div class="bd-tabs"><button class="bdtab on" onclick="swBd('ind',this)">個人組</button><button class="bdtab" onclick="swBd('team',this)">團體組</button></div>
+      <div id="bd-ind"><div style="text-align:center;padding:32px;color:#5a7a63;font-size:13px;">比賽結束後顯示最終排名</div></div>
+      <div id="bd-team" style="display:none;"><div style="text-align:center;padding:32px;color:#5a7a63;font-size:13px;">比賽結束後顯示最終排名</div></div>
     </div>
+
+    <!-- ADMIN -->
+    <div class="page" id="pg-admin">
+      <div class="adm-stl">學員統計</div>
+      <div class="adm-sg">
+        <div class="adm-s"><div class="adm-sv" id="adm-tot">—</div><div class="adm-sl">已報名</div></div>
+        <div class="adm-s"><div class="adm-sv" style="color:#f59e0b;" id="adm-pn">—</div><div class="adm-sl">待審核</div></div>
+      </div>
+      <div class="adm-stl">待審核學員</div>
+      <div id="adm-pl"><div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">載入中...</div></div>
+      <div class="adm-stl">已通過學員</div>
+      <div id="adm-al"><div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">載入中...</div></div>
+      <div class="adm-stl">分組管理</div>
+      <button class="adm-pr" onclick="admNewGrp()">＋ 新增組別</button>
+      <div id="adm-gl"><div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">載入中...</div></div>
+      <div class="adm-stl">官方量測</div>
+      <div id="adm-ol"><div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">載入中...</div></div>
+      <div class="adm-stl">比賽設定</div>
+      <div class="adm-c">
+        <div style="font-size:11px;font-weight:700;color:#5a7a63;margin-bottom:5px;">比賽名稱</div>
+        <input class="adm-in" id="adm-sn" placeholder="2026 春季曲線管理比賽">
+        <div class="adm-2c">
+          <div class="adm-fl"><label>開賽日期</label><input id="adm-ss" type="date"></div>
+          <div class="adm-fl"><label>結賽日期</label><input id="adm-se" type="date"></div>
+          <div class="adm-fl"><label>每組最少</label><input id="adm-smin" type="number" value="2"></div>
+          <div class="adm-fl"><label>每組最多</label><input id="adm-smax" type="number" value="5"></div>
+        </div>
+        <button class="adm-pr" style="margin-top:4px;" onclick="admSaveSet()">儲存設定</button>
+      </div>
+      <div style="height:24px;"></div>
+    </div>
+
   </div>
 
-  <!-- RANK -->
-  <div class="screen hidden" id="screen-rank">
-    <div class="board-tabs">
-      <div class="board-tab active" onclick="switchBoard('ind',this)">個人組</div>
-      <div class="board-tab" onclick="switchBoard('team',this)">團體組</div>
-    </div>
-    <div id="board-ind"><div class="board-body" id="board-ind-body"><div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">比賽結束後顯示最終排名</div></div></div>
-    <div id="board-team" style="display:none;"><div class="board-body" id="board-team-body"><div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">比賽結束後顯示最終排名</div></div></div>
-  </div>
-
-  <!-- ADMIN (只有管理員看得到) -->
-  <div class="screen hidden" id="screen-admin">
-    <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;">管理後台</div>
-
-    <!-- 統計 -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
-      <div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
-        <div style="font-size:26px;font-weight:700;color:var(--text);" id="adm-total">—</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:3px;">已報名</div>
-      </div>
-      <div style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
-        <div style="font-size:26px;font-weight:700;color:#f59e0b;" id="adm-pending">—</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:3px;">待審核</div>
-      </div>
-    </div>
-
-    <!-- 待審核 -->
-    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">待審核學員</div>
-    <div id="adm-pending-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
-      <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">載入中...</div>
-    </div>
-
-    <!-- 已通過學員 -->
-    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">已通過學員</div>
-    <div id="adm-approved-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
-      <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">載入中...</div>
-    </div>
-
-    <!-- 分組管理 -->
-    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">分組管理</div>
-    <button onclick="openNewGroupAdm()" style="width:100%;padding:11px;background:var(--acc);color:var(--g1);border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px;">＋ 新增組別</button>
-    <div id="adm-groups-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
-      <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">載入中...</div>
-    </div>
-
-    <!-- 官方量測 -->
-    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">官方量測輸入</div>
-    <div id="adm-official-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
-      <div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">載入中...</div>
-    </div>
-
-    <!-- 比賽設定 -->
-    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">比賽設定</div>
-    <div style="background:var(--bg);border-radius:14px;padding:14px;margin-bottom:8px;">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:700;">比賽名稱</div>
-      <input id="adm-s-name" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;color:var(--text);" placeholder="2026 春季曲線管理比賽">
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
-      <div style="background:var(--bg);border-radius:14px;padding:12px;">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:700;">開賽日期</div>
-        <input id="adm-s-start" type="date" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit;color:var(--text);">
-      </div>
-      <div style="background:var(--bg);border-radius:14px;padding:12px;">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:700;">結賽日期</div>
-        <input id="adm-s-end" type="date" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;font-family:inherit;color:var(--text);">
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      <div style="background:var(--bg);border-radius:14px;padding:12px;">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:700;">每組最少人數</div>
-        <input id="adm-s-min" type="number" value="2" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit;color:var(--text);">
-      </div>
-      <div style="background:var(--bg);border-radius:14px;padding:12px;">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:700;">每組最多人數</div>
-        <input id="adm-s-max" type="number" value="5" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:inherit;color:var(--text);">
-      </div>
-    </div>
-    <button onclick="admSaveSettings()" style="width:100%;padding:13px;background:var(--acc);color:var(--g1);border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:24px;">儲存設定</button>
-  </div>
-
-  <!-- BOTTOM TABS -->
-  <div class="bottom-tabs">
-    <div class="btab active" onclick="goTab('home',this)"><div class="btab-icon">🏠</div><div>首頁</div><div class="btab-dot"></div></div>
-    <div class="btab" onclick="goTab('input',this)"><div class="btab-icon">✏️</div><div>今日輸入</div><div class="btab-dot"></div></div>
-    <div class="btab" onclick="goTab('measure',this)"><div class="btab-icon">📏</div><div>量測</div><div class="btab-dot"></div></div>
-    <div class="btab" onclick="goTab('profile',this)"><div class="btab-icon">👤</div><div>個人</div><div class="btab-dot"></div></div>
-    <div class="btab" onclick="goTab('rank',this)"><div class="btab-icon">🏆</div><div>排行榜</div><div class="btab-dot"></div></div>
-    <div class="btab" id="admin-tab" style="display:none;" onclick="goTab('admin',this)"><div class="btab-icon">⚙️</div><div>管理</div><div class="btab-dot"></div></div>
-  </div>
-</div><!-- end app-view -->
-
-</div><!-- end phone -->
-
-<!-- MODAL -->
-<div class="overlay hidden" id="overlay" onclick="overlayClick(event)">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" id="modal-title">新增食物</div>
-    <div class="modal-type-tabs">
-      <button class="mtype-btn active" onclick="setMType('nut',this)">🌿 紐崔萊</button>
-      <button class="mtype-btn" onclick="setMType('custom',this)">✏️ 自行輸入</button>
-    </div>
-    <div id="panel-nut" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
-      <div class="modal-cats">
-        <button class="mcat-btn active" onclick="setMCat('全部',this)">全部</button>
-        <button class="mcat-btn" onclick="setMCat('優質蛋白素',this)">蛋白素</button>
-        <button class="mcat-btn" onclick="setMCat('BodyKey',this)">BodyKey</button>
-        <button class="mcat-btn" onclick="setMCat('XS',this)">XS</button>
-      </div>
-      <div class="serving-panel" id="serving-panel" style="display:none;">
-        <div class="sp-title" id="sp-name-title">選擇份數</div>
-        <div class="sp-grid" id="sp-grid"></div>
-      </div>
-      <div class="modal-list" id="modal-list"></div>
-      <button class="modal-confirm" id="mc-nut" onclick="confirmNut()">請先選擇產品</button>
-    </div>
-    <div id="panel-custom" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
-      <div class="custom-panel">
-        <label>食物名稱</label>
-        <input class="custom-input" id="c-name" type="text" placeholder="例：水煮蛋、地瓜、雞胸肉">
-        <div class="custom-row-2">
-          <div><label>熱量（大卡）</label><input class="custom-input" id="c-cal" type="number" placeholder="0"></div>
-          <div><label>蛋白質（g）</label><input class="custom-input" id="c-pro" type="number" placeholder="0"></div>
-        </div>
-        <div class="custom-row-2">
-          <div><label>醣類（g）</label><input class="custom-input" id="c-carb" type="number" placeholder="0"></div>
-          <div><label>脂肪（g）</label><input class="custom-input" id="c-fat" type="number" placeholder="0"></div>
-        </div>
-        <label>份量</label>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input class="custom-input" id="c-serving" type="number" placeholder="1" min="0.5" step="0.5" value="1" style="margin-bottom:0;flex:1;">
-          <span style="font-size:11px;color:var(--muted);white-space:nowrap;">份</span>
-        </div>
-      </div>
-      <button class="modal-confirm ready" onclick="confirmCustom()">確認加入</button>
-    </div>
+  <!-- TABS -->
+  <div class="tabs" id="main-tabs" style="display:none;">
+    <button class="tab on" onclick="goP('home',this)"><div class="tab-ic">🏠</div><div>首頁</div><div class="tab-dot"></div></button>
+    <button class="tab" onclick="goP('input',this)"><div class="tab-ic">✏️</div><div>今日輸入</div><div class="tab-dot"></div></button>
+    <button class="tab" onclick="goP('measure',this)"><div class="tab-ic">📏</div><div>量測</div><div class="tab-dot"></div></button>
+    <button class="tab" onclick="goP('profile',this)"><div class="tab-ic">👤</div><div>個人</div><div class="tab-dot"></div></button>
+    <button class="tab" onclick="goP('rank',this)"><div class="tab-ic">🏆</div><div>排行榜</div><div class="tab-dot"></div></button>
+    <button class="tab" id="adm-tab" style="display:none;" onclick="goP('admin',this)"><div class="tab-ic">⚙️</div><div>管理</div><div class="tab-dot"></div></button>
   </div>
 </div>
 
+<!-- MODAL -->
+<div class="ov h" id="ov" onclick="ovClick(event)">
+  <div class="modal" id="modal">
+    <div class="mh"></div>
+    <div class="mt" id="mt">新增食物</div>
+    <div id="mi" style="display:flex;flex-direction:column;flex:1;overflow:hidden;"></div>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════
-// ★ 填入你的 Supabase 設定
-// ══════════════════════════════════════════════
-const SUPABASE_URL = 'https://prkgdwhwxdrmldgakzjq.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_d5pjEDl-T2mE_B86Aj5F8Q_pNzpUNcT';
-const ADMIN_EMAIL = 'binnu1025@gmail.com'; // ← 你的管理員 Gmail
-// ══════════════════════════════════════════════
-// ══════════════════════════════════════════════
-
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// ── PRODUCTS ──
+const SB_URL='https://prkgdwhwxdrmldgakzjq.supabase.co';
+const SB_KEY='sb_publishable_d5pjEDl-T2mE_B86Aj5F8Q_pNzpUNcT';
+const ADMIN='binnu1025@gmail.com';
+const {createClient}=supabase;
+const sb=createClient(SB_URL,SB_KEY);
 const STEPS=[0.5,1,1.5,2,2.5,3];
-const PRODUCTS=[
-  {name:"優質蛋白素－全植物配方",    code:"2575",serving:"10g/匙", cal:38,  pro:8,    carb:0.3, fat:0.5,  cat:"優質蛋白素",icon:"🌱"},
-  {name:"優質蛋白素－關鍵行動力配方",code:"2957",serving:"15g/匙", cal:58,  pro:8.9,  carb:4.8, fat:0.4,  cat:"優質蛋白素",icon:"💪"},
-  {name:"優質蛋白素－巧克力口味",    code:"2802",serving:"12.1g/匙",cal:92, pro:10,   carb:9.5, fat:1.5,  cat:"優質蛋白素",icon:"🍫"},
-  {name:"優質蛋白素－抹茶口味",      code:"2648",serving:"11.7g/匙",cal:102,pro:9,    carb:12,  fat:2,    cat:"優質蛋白素",icon:"🍵"},
-  {name:"BodyKey超纖飲－香蕉",       code:"2991",serving:"51g/包", cal:207, pro:17.2, carb:22.7,fat:6.4,  cat:"BodyKey",   icon:"🍌"},
-  {name:"BodyKey超纖飲－咖啡拿鐵",  code:"2049",serving:"51g/包", cal:203, pro:33.7, carb:22.7,fat:11.8, cat:"BodyKey",   icon:"☕"},
-  {name:"BodyKey超纖飲－巧克力",    code:"2048",serving:"51g/包", cal:208, pro:33.7, carb:22.7,fat:6.5,  cat:"BodyKey",   icon:"🍫"},
-  {name:"BodyKey超纖飲－莓果",      code:"2047",serving:"51g/包", cal:207, pro:17.2, carb:22.7,fat:6.4,  cat:"BodyKey",   icon:"🫐"},
-  {name:"XS活力飲－葡萄柚",         code:"9766",serving:"6.4g/包",cal:26,  pro:4,    carb:2.5, fat:0,    cat:"XS",        icon:"🍊"},
-  {name:"XS紅橙飲",                 code:"9797",serving:"3.5g/包",cal:12.7,pro:0.2,  carb:3,   fat:0,    cat:"XS",        icon:"🟠"},
+const PRODS=[
+  {n:"優質蛋白素－全植物配方",s:"10g/匙",c:38,p:8,cr:0.3,f:0.5,cat:"優質蛋白素",ic:"🌱"},
+  {n:"優質蛋白素－關鍵行動力配方",s:"15g/匙",c:58,p:8.9,cr:4.8,f:0.4,cat:"優質蛋白素",ic:"💪"},
+  {n:"優質蛋白素－巧克力口味",s:"12.1g/匙",c:92,p:10,cr:9.5,f:1.5,cat:"優質蛋白素",ic:"🍫"},
+  {n:"優質蛋白素－抹茶口味",s:"11.7g/匙",c:102,p:9,cr:12,f:2,cat:"優質蛋白素",ic:"🍵"},
+  {n:"BodyKey超纖飲－香蕉",s:"51g/包",c:207,p:17.2,cr:22.7,f:6.4,cat:"BodyKey",ic:"🍌"},
+  {n:"BodyKey超纖飲－咖啡拿鐵",s:"51g/包",c:203,p:33.7,cr:22.7,f:11.8,cat:"BodyKey",ic:"☕"},
+  {n:"BodyKey超纖飲－巧克力",s:"51g/包",c:208,p:33.7,cr:22.7,f:6.5,cat:"BodyKey",ic:"🍫"},
+  {n:"BodyKey超纖飲－莓果",s:"51g/包",c:207,p:17.2,cr:22.7,f:6.4,cat:"BodyKey",ic:"🫐"},
+  {n:"XS活力飲－葡萄柚",s:"6.4g/包",c:26,p:4,cr:2.5,f:0,cat:"XS",ic:"🍊"},
+  {n:"XS紅橙飲",s:"3.5g/包",c:12.7,p:0.2,cr:3,f:0,cat:"XS",ic:"🟠"},
 ];
+let CU=null,UP=null,ML=[[],[],[],[]],WM=0,CM=0,SP=null,SS=1,MC='全部',MT='nut',MOOD=3,ET='',RD={},RU=[],RG=[],RCO=null;
 
-// ── STATE ──
-let currentUser=null, userProfile=null;
-let mealLog=[[],[],[],[]];
-let waterMl=0, currentMeal=0;
-let selectedProd=null, selectedServing=1, modalCat='全部', mType='nut';
-let currentMood=3, exType='', regStep=1, regData={};
-
-// ── INIT ──
 async function init(){
-  const {data:{session}} = await sb.auth.getSession();
-  if(session) await handleSession(session.user);
-  else showLogin();
-  sb.auth.onAuthStateChange(async(_,session)=>{
-    if(session) await handleSession(session.user);
-    else showLogin();
-  });
+  const {data:{session}}=await sb.auth.getSession();
+  if(session)await hs(session.user);else sv('login');
+  sb.auth.onAuthStateChange(async(_,s)=>{if(s)await hs(s.user);else sv('login');});
 }
-
-async function handleSession(user){
-  currentUser=user;
-  const {data:profile} = await sb.from('users').select('*').eq('auth_id',user.id).single();
-  if(!profile){
-    // new user - show registration
-    regData.email = user.email;
-    showReg();
-  } else if(profile.status==='pending'){
-    showPending();
-  } else if(profile.status==='approved'){
-    userProfile=profile;
-    showApp();
-  } else {
-    showPending();
+async function hs(u){
+  CU=u;const {data:p}=await sb.from('users').select('*').eq('auth_id',u.id).single();
+  if(!p){RD.email=u.email;sv('reg');rrs(1);}
+  else if(p.status==='approved'){UP=p;sv('app');}
+  else sv('pending');
+}
+function sv(v){
+  document.querySelectorAll('.fv').forEach(x=>x.classList.remove('on'));
+  document.getElementById('main-top').style.display='none';
+  document.getElementById('main-pages').style.display='none';
+  document.getElementById('main-tabs').style.display='none';
+  if(v==='login')document.getElementById('fv-login').classList.add('on');
+  else if(v==='pending')document.getElementById('fv-pending').classList.add('on');
+  else if(v==='reg')document.getElementById('fv-reg').classList.add('on');
+  else if(v==='app'){
+    document.getElementById('main-top').style.display='flex';
+    document.getElementById('main-pages').style.display='block';
+    document.getElementById('main-tabs').style.display='flex';
+    if(CU&&CU.email===ADMIN)document.getElementById('adm-tab').style.display='flex';
+    loadApp();
   }
 }
+document.getElementById('login-btn').onclick=async()=>{await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});};
+document.getElementById('pending-logout').onclick=signOut;
+async function signOut(){await sb.auth.signOut();sv('login');}
 
-// ── AUTH ──
-function showLogin(){
-  hide('pending-view');hide('reg-view');hide('app-view');
-  show('login-view','flex');
-}
-function showPending(){
-  hide('login-view');hide('reg-view');hide('app-view');
-  show('pending-view','flex');
-}
-function showReg(){
-  hide('login-view');hide('pending-view');hide('app-view');
-  show('reg-view','flex');
-  renderRegStep(1);
-}
-function showApp(){
-  hide('login-view');hide('pending-view');hide('reg-view');
-  show('app-view','flex');
-  // 管理員才顯示管理頁籤
-  if(currentUser && currentUser.email === ADMIN_EMAIL){
-    const admTab = document.getElementById('admin-tab');
-    if(admTab) admTab.style.display='flex';
-  }
-  loadAppData();
+function goP(n,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pg-'+n).classList.add('on');
+  if(n==='admin')loadAdm();
 }
 
-document.getElementById('google-login-btn').onclick = async()=>{
-  const {error}=await sb.auth.signInWithOAuth({
-    provider:'google',
-    options:{redirectTo:window.location.href}
-  });
-  if(error) showToast('登入失敗：'+error.message);
-};
-document.getElementById('pending-logout').onclick = signOut;
-async function signOut(){
-  await sb.auth.signOut();
-  showLogin();
+// REG
+function rrs(s){
+  ['st1','st2','st3'].forEach((id,i)=>{const e=document.getElementById(id);e.className='step '+(i+1<s?'d':i+1===s?'a':'t');e.textContent=i+1<s?'✓':i+1;});
+  const b=document.getElementById('reg-body');
+  if(s===1){b.innerHTML=`<div class="fg"><label>姓名</label><input class="fi" id="rn" type="text" placeholder="你的名字" value="${RD.name||''}"></div><div class="fg"><label>電話</label><input class="fi" id="rph" type="tel" placeholder="0912-345-678" value="${RD.phone||''}"></div><div class="fg"><label>性別</label><div class="gr-row"><button class="gb${RD.gender==='female'?' on':''}" onclick="sg('female',this)">女</button><button class="gb${RD.gender==='male'?' on':''}" onclick="sg('male',this)">男</button></div></div><div class="fg2"><div class="fg"><label>年齡</label><input class="fi" id="ra" type="number" placeholder="30" value="${RD.age||''}"></div><div class="fg"><label>身高 cm</label><input class="fi" id="rh" type="number" placeholder="160" value="${RD.height||''}"></div></div><div class="fg"><label>Email</label><input class="fi" value="${RD.email||''}" readonly style="opacity:.6;"></div><button class="btn-nx" onclick="rn1()">下一步 →</button>`;}
+  else if(s===2){b.innerHTML=`<div class="nb">⚠️ 初始數值由老師量測填入，作為比賽基準線。未量測可先填 0。</div><div class="fg2"><div class="fg"><label>體重 kg</label><input class="fi" id="rw" type="number" step="0.1" placeholder="60.0" value="${RD.weight||''}"></div><div class="fg"><label>體脂 %</label><input class="fi" id="rf" type="number" step="0.1" placeholder="25.0" value="${RD.fat||''}"></div></div><div class="fg2"><div class="fg"><label>腰圍 cm</label><input class="fi" id="rwt" type="number" step="0.5" placeholder="75.0" value="${RD.waist||''}"></div><div class="fg"><label>臀圍 cm</label><input class="fi" id="rhip" type="number" step="0.5" placeholder="90.0" value="${RD.hip||''}"></div></div><div class="calc-bx"><div style="font-size:10px;font-weight:700;color:#5a7a63;margin-bottom:7px;">系統計算</div><div class="calc-rw"><div><div class="calc-v" id="cb">—</div><div class="calc-l">BMI</div></div><div><div class="calc-v" id="cbr">—</div><div class="calc-l">BMR</div></div><div><div class="calc-v" id="ct">—</div><div class="calc-l">TDEE</div></div></div></div><button class="btn-nx" onclick="rn2()">下一步 →</button><button class="btn-bk" onclick="rrs(1)">← 上一步</button>`;document.getElementById('rw')?.addEventListener('input',ucp);ucp();}
+  else{b.innerHTML=`<div class="fg"><label>選擇參賽方式（可複選）</label></div><button class="type-btn${RD.ti?' on':''}" onclick="tt('i',this)"><span style="font-size:18px;">🏃</span><div style="flex:1;text-align:left;"><div style="font-size:13px;font-weight:700;color:#0d2b1a;">個人組</div><div style="font-size:10px;color:#5a7a63;">以個人體脂率下降幅度競賽</div></div><div class="tbc${RD.ti?' on':''}">✓</div></button><button class="type-btn${RD.tt?' on':''}" onclick="tt('t',this)"><span style="font-size:18px;">👥</span><div style="flex:1;text-align:left;"><div style="font-size:13px;font-weight:700;color:#0d2b1a;">團體組</div><div style="font-size:10px;color:#5a7a63;">老師會為你分配組別</div></div><div class="tbc${RD.tt?' on':''}">✓</div></button><div style="margin-top:10px;"><label style="font-size:11px;font-weight:700;color:#5a7a63;display:block;margin-bottom:5px;">備注（選填）</label><textarea class="note-ta" id="rnote" style="height:56px;">${RD.note||''}</textarea></div><button class="btn-nx" onclick="subReg()" style="margin-top:12px;">送出報名 ✓</button><button class="btn-bk" onclick="rrs(2)">← 上一步</button>`;}
+}
+function sg(g,el){RD.gender=g;document.querySelectorAll('.gb').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+function tt(t,el){if(t==='i')RD.ti=!RD.ti;else RD.tt=!RD.tt;rrs(3);}
+function ucp(){
+  const w=parseFloat(document.getElementById('rw')?.value),h=RD.height,age=RD.age,g=RD.gender;if(!w||!h||!age||!g)return;
+  const bmi=+(w/((h/100)**2)).toFixed(1),bmr=g==='female'?Math.round(10*w+6.25*h-5*age-161):Math.round(10*w+6.25*h-5*age+5),tdee=Math.round(bmr*1.375);
+  const cb=document.getElementById('cb'),cbr=document.getElementById('cbr'),ct=document.getElementById('ct');
+  if(cb)cb.textContent=bmi;if(cbr)cbr.textContent=bmr;if(ct)ct.textContent=tdee;
+}
+function rn1(){
+  const name=document.getElementById('rn')?.value.trim();if(!name){toast('請輸入姓名');return;}if(!RD.gender){toast('請選擇性別');return;}
+  const a=document.getElementById('ra')?.value,h=document.getElementById('rh')?.value;if(!a||!h){toast('請填年齡和身高');return;}
+  RD.name=name;RD.phone=document.getElementById('rph')?.value;RD.age=parseInt(a);RD.height=parseFloat(h);rrs(2);
+}
+function rn2(){RD.weight=parseFloat(document.getElementById('rw')?.value||0);RD.fat=parseFloat(document.getElementById('rf')?.value||0);RD.waist=parseFloat(document.getElementById('rwt')?.value||0);RD.hip=parseFloat(document.getElementById('rhip')?.value||0);rrs(3);}
+async function subReg(){
+  if(!RD.ti&&!RD.tt){toast('請選擇至少一種參賽方式');return;}
+  const type=RD.ti&&RD.tt?'both':RD.ti?'individual':'team';
+  const {error}=await sb.from('users').insert({auth_id:CU.id,email:CU.email,name:RD.name,phone:RD.phone,gender:RD.gender,age:RD.age,height_cm:RD.height,contest_type:type,note:document.getElementById('rnote')?.value||'',status:'pending'});
+  if(error){toast('送出失敗');return;}sv('pending');toast('✓ 報名已送出！');
 }
 
-// ── REGISTRATION ──
-function renderRegStep(step){
-  regStep=step;
-  ['step-1','step-2','step-3'].forEach((id,i)=>{
-    const el=document.getElementById(id);
-    el.className='step '+(i+1<step?'done':i+1===step?'active':'todo');
-    if(i+1<step)el.textContent='✓';
-    else el.textContent=i+1;
-  });
-  const body=document.getElementById('reg-body');
-  if(step===1){
-    body.innerHTML=`
-      <div class="fg"><label>姓名</label><input class="fi" id="r-name" type="text" placeholder="你的名字" value="${regData.name||''}"></div>
-      <div class="fg"><label>電話</label><input class="fi" id="r-phone" type="tel" placeholder="0912-345-678" value="${regData.phone||''}"></div>
-      <div class="fg"><label>性別</label><div class="gender-row"><button class="gb${regData.gender==='female'?' sel':''}" onclick="selGender('female',this)">女</button><button class="gb${regData.gender==='male'?' sel':''}" onclick="selGender('male',this)">男</button></div></div>
-      <div class="fg-2">
-        <div class="fg"><label>年齡</label><input class="fi" id="r-age" type="number" placeholder="30" value="${regData.age||''}"></div>
-        <div class="fg"><label>身高（cm）</label><input class="fi" id="r-height" type="number" placeholder="160" value="${regData.height||''}"></div>
-      </div>
-      <div class="fg"><label>Email（自動填入）</label><input class="fi" value="${regData.email||''}" readonly style="opacity:.6;"></div>
-      <button class="btn-next" onclick="regNext1()">下一步 →</button>`;
-  } else if(step===2){
-    body.innerHTML=`
-      <div class="note-box">⚠️ 以下數值由老師現場量測後填入，作為比賽基準線。如尚未量測，先填 0 即可，老師會再為你輸入。</div>
-      <div class="fg-2">
-        <div class="fg"><label>體重（kg）</label><input class="fi" id="r-weight" type="number" step="0.1" placeholder="60.0" value="${regData.weight||''}"></div>
-        <div class="fg"><label>體脂率（%）</label><input class="fi" id="r-fat" type="number" step="0.1" placeholder="25.0" value="${regData.fat||''}"></div>
-      </div>
-      <div class="fg-2">
-        <div class="fg"><label>腰圍（cm）</label><input class="fi" id="r-waist" type="number" step="0.5" placeholder="75.0" value="${regData.waist||''}"></div>
-        <div class="fg"><label>臀圍（cm）</label><input class="fi" id="r-hip" type="number" step="0.5" placeholder="90.0" value="${regData.hip||''}"></div>
-      </div>
-      <div id="calc-preview" class="calc-box" style="display:${regData.height&&regData.age?'block':'none'}">
-        <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:7px;">系統計算（依你的資料）</div>
-        <div class="calc-row">
-          <div><div class="calc-val" id="pre-bmi">—</div><div class="calc-lbl">BMI</div></div>
-          <div><div class="calc-val" id="pre-bmr">—</div><div class="calc-lbl">BMR kcal</div></div>
-          <div><div class="calc-val" id="pre-tdee">—</div><div class="calc-lbl">TDEE kcal</div></div>
-        </div>
-      </div>
-      <button class="btn-next" onclick="regNext2()">下一步 →</button>
-      <button class="btn-back" onclick="renderRegStep(1)">← 上一步</button>`;
-    updateCalcPreview();
-    ['r-weight','r-fat'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el)el.addEventListener('input',updateCalcPreview);
-    });
-  } else if(step===3){
-    body.innerHTML=`
-      <div class="fg"><label>選擇參賽方式（可複選）</label></div>
-      <div class="type-btn${regData.typeInd?' sel':''}" onclick="togType('ind',this)">
-        <span style="font-size:18px;">🏃</span>
-        <div style="flex:1;"><div style="font-size:13px;font-weight:700;color:var(--text);">個人組</div><div style="font-size:10px;color:var(--muted);">以個人體脂率下降幅度排名</div></div>
-        <div class="tb-check${regData.typeInd?' on':''}">✓</div>
-      </div>
-      <div class="type-btn${regData.typeTeam?' sel':''}" onclick="togType('team',this)">
-        <span style="font-size:18px;">👥</span>
-        <div style="flex:1;"><div style="font-size:13px;font-weight:700;color:var(--text);">團體組</div><div style="font-size:10px;color:var(--muted);">加入隊伍，老師會為你分配組別</div></div>
-        <div class="tb-check${regData.typeTeam?' on':''}">✓</div>
-      </div>
-      <div style="margin-top:10px;"><label style="font-size:11px;font-weight:700;color:var(--muted);">備注（選填）</label><textarea class="note-ta" id="r-note" style="height:56px;margin-top:4px;" placeholder="有什麼想讓老師知道的？">${regData.note||''}</textarea></div>
-      <div style="background:#d1fae5;border-radius:10px;padding:10px 12px;font-size:11px;color:#065f46;margin:10px 0;line-height:1.6;">📋 報名後老師會審核並分配組別，通過後即可使用全部功能。</div>
-      <button class="btn-next" onclick="submitReg()">送出報名 ✓</button>
-      <button class="btn-back" onclick="renderRegStep(2)">← 上一步</button>`;
-  }
+// APP
+async function loadApp(){
+  const p=UP;if(!p)return;
+  const h=new Date().getHours();document.getElementById('h-gr').textContent=h<12?'早安':h<18?'午安':'晚安';
+  document.getElementById('h-nm').textContent=p.name+' 👋';
+  document.getElementById('pf-av').textContent=p.name.charAt(0);document.getElementById('pf-nm').textContent=p.name;
+  document.getElementById('pf-h').textContent=p.height_cm||'—';document.getElementById('pf-a').textContent=p.age||'—';document.getElementById('pf-g').textContent=p.gender==='female'?'女':'男';
+  const te=document.getElementById('pf-tags');te.innerHTML='';
+  if(p.contest_type==='individual'||p.contest_type==='both')te.innerHTML+='<span class="ptag pti">個人組</span>';
+  if(p.contest_type==='team'||p.contest_type==='both')te.innerHTML+='<span class="ptag ptt">團體組</span>';
+  if(p.group_id){const {data:g}=await sb.from('groups').select('name,emoji').eq('id',p.group_id).single();if(g)document.getElementById('pf-tm').textContent=g.emoji+' '+g.name;}
+  const {data:co}=await sb.from('contests').select('*').eq('is_active',true).single();
+  if(co){const d=Math.max(1,Math.floor((new Date()-new Date(co.start_date))/86400000)+1);document.getElementById('week-b').textContent='第'+Math.ceil(d/7)+'週';}
+  calcH(p);loadOff();loadToday();loadTrend();
 }
-
-function selGender(g,el){
-  regData.gender=g;
-  document.querySelectorAll('.gb').forEach(b=>b.classList.remove('sel'));
-  el.classList.add('sel');
+function calcH(p){
+  if(!p.height_cm||!p.age)return;
+  const w=60,h=p.height_cm,age=p.age,g=p.gender;
+  const bmi=+(w/((h/100)**2)).toFixed(1),bmr=g==='female'?Math.round(10*w+6.25*h-5*age-161):Math.round(10*w+6.25*h-5*age+5),tdee=Math.round(bmr*1.375),tgt=Math.round(tdee*0.8);
+  let bl='正常';if(bmi<18.5)bl='過輕';else if(bmi>=24&&bmi<27)bl='過重';else if(bmi>=27)bl='肥胖';
+  document.getElementById('cc-bmi').textContent=bmi;document.getElementById('cc-bmi-l').textContent=bl;
+  document.getElementById('cc-bmr').innerHTML=bmr+'<span class="cc-u"> kcal</span>';document.getElementById('cc-tdee').innerHTML=tdee+'<span class="cc-u"> kcal</span>';document.getElementById('cc-tgt').innerHTML=tgt+'<span class="cc-u"> kcal</span>';
 }
-function togType(type,el){
-  if(type==='ind') regData.typeInd=!regData.typeInd;
-  else regData.typeTeam=!regData.typeTeam;
-  renderRegStep(3);
-}
-function updateCalcPreview(){
-  const w=parseFloat(document.getElementById('r-weight')?.value);
-  const h=regData.height, age=regData.age, g=regData.gender;
-  if(!w||!h||!age||!g) return;
-  const bmi=+(w/((h/100)**2)).toFixed(1);
-  const bmr=g==='female'?Math.round(10*w+6.25*h-5*age-161):Math.round(10*w+6.25*h-5*age+5);
-  const tdee=Math.round(bmr*1.375);
-  const box=document.getElementById('calc-preview');
-  if(box){box.style.display='block';}
-  const pb=document.getElementById('pre-bmi'),pbr=document.getElementById('pre-bmr'),pt=document.getElementById('pre-tdee');
-  if(pb)pb.textContent=bmi;if(pbr)pbr.textContent=bmr;if(pt)pt.textContent=tdee;
-}
-function regNext1(){
-  const name=document.getElementById('r-name')?.value.trim();
-  const phone=document.getElementById('r-phone')?.value.trim();
-  const age=document.getElementById('r-age')?.value;
-  const height=document.getElementById('r-height')?.value;
-  if(!name){showToast('請輸入姓名');return;}
-  if(!regData.gender){showToast('請選擇性別');return;}
-  if(!age||!height){showToast('請填入年齡和身高');return;}
-  regData.name=name;regData.phone=phone;regData.age=parseInt(age);regData.height=parseFloat(height);
-  renderRegStep(2);
-}
-function regNext2(){
-  const w=document.getElementById('r-weight')?.value;
-  const f=document.getElementById('r-fat')?.value;
-  regData.weight=w?parseFloat(w):0;
-  regData.fat=f?parseFloat(f):0;
-  regData.waist=parseFloat(document.getElementById('r-waist')?.value||0);
-  regData.hip=parseFloat(document.getElementById('r-hip')?.value||0);
-  renderRegStep(3);
-}
-async function submitReg(){
-  if(!regData.typeInd&&!regData.typeTeam){showToast('請選擇至少一種參賽方式');return;}
-  regData.note=document.getElementById('r-note')?.value||'';
-  const type=regData.typeInd&&regData.typeTeam?'both':regData.typeInd?'individual':'team';
-  const {error}=await sb.from('users').insert({
-    auth_id:currentUser.id,
-    email:currentUser.email,
-    name:regData.name,
-    phone:regData.phone,
-    gender:regData.gender,
-    age:regData.age,
-    height_cm:regData.height,
-    contest_type:type,
-    note:regData.note,
-    status:'pending'
-  });
-  if(error){showToast('送出失敗：'+error.message);return;}
-  showPending();
-  showToast('✓ 報名已送出！等候老師審核');
-}
-
-// ── APP DATA ──
-async function loadAppData(){
-  if(!userProfile)return;
-  const p=userProfile;
-  // hero
-  const firstName=p.name.charAt(0);
-  document.getElementById('hero-name').textContent=p.name+' 👋';
-  // profile
-  document.getElementById('prof-name').textContent=p.name;
-  document.getElementById('prof-av').textContent=firstName;
-  document.getElementById('bio-height').textContent=p.height_cm||'—';
-  document.getElementById('bio-age').textContent=p.age||'—';
-  document.getElementById('bio-gender').textContent=p.gender==='female'?'女':'男';
-  // calc
-  calcHealth(p);
-  // official measurement
-  loadOfficialMeasurement();
-  // group
-  if(p.group_id){
-    const {data:grp}=await sb.from('groups').select('name,emoji').eq('id',p.group_id).single();
-    if(grp){document.getElementById('prof-team').textContent=grp.emoji+' '+grp.name;}
-  }
-  // tags
-  const tagsEl=document.getElementById('prof-tags');
-  const type=p.contest_type;
-  tagsEl.innerHTML='';
-  if(type==='individual'||type==='both')tagsEl.innerHTML+='<span class="ptag ptag-ind">個人組</span>';
-  if(type==='team'||type==='both')tagsEl.innerHTML+='<span class="ptag ptag-team">團體組</span>';
-  // today log
-  loadTodayLog();
-  // trend
-  loadTrend();
-}
-
-function calcHealth(p){
-  if(!p.height_cm||!p.age) return;
-  const w=p.weight_start||60;
-  const h=p.height_cm, age=p.age, g=p.gender;
-  const bmi=+(w/((h/100)**2)).toFixed(1);
-  const bmr=g==='female'?Math.round(10*w+6.25*h-5*age-161):Math.round(10*w+6.25*h-5*age+5);
-  const tdee=Math.round(bmr*1.375);
-  const target=Math.round(tdee*0.8);
-  let bmiLbl='正常';
-  if(bmi<18.5)bmiLbl='過輕';else if(bmi<24)bmiLbl='正常';else if(bmi<27)bmiLbl='過重';else bmiLbl='肥胖';
-  document.getElementById('cc-bmi').textContent=bmi;
-  document.getElementById('cc-bmi-lbl').textContent=bmiLbl;
-  document.getElementById('cc-bmr').innerHTML=bmr+'<span class="cc-u"> kcal</span>';
-  document.getElementById('cc-tdee').innerHTML=tdee+'<span class="cc-u"> kcal</span>';
-  document.getElementById('cc-target').innerHTML=target+'<span class="cc-u"> kcal</span>';
-}
-
-async function loadOfficialMeasurement(){
-  const {data:om}=await sb.from('official_measurements').select('*').eq('user_id',userProfile.id).single();
-  if(!om||!om.start_locked){document.getElementById('official-data').innerHTML='<div style="font-size:12px;color:rgba(255,255,255,.4);text-align:center;padding:8px 0;">尚無官方量測數據</div>';return;}
-  // update hero stats
-  if(om.weight_start){
-    document.getElementById('h-weight').textContent=om.weight_end||om.weight_start;
-    if(om.weight_end){document.getElementById('h-wdiff').textContent='▼ '+(om.weight_start-om.weight_end).toFixed(1)+'kg';}
-  }
-  if(om.bodyfat_start){
-    document.getElementById('h-fat').textContent=(om.bodyfat_end||om.bodyfat_start)+'%';
-    if(om.bodyfat_end){document.getElementById('h-fdiff').textContent='▼ '+(om.bodyfat_start-om.bodyfat_end).toFixed(1)+'%';}
-  }
-  if(om.waist_start){
-    document.getElementById('h-waist').textContent=om.waist_end||om.waist_start;
-    if(om.waist_end){document.getElementById('h-waistdiff').textContent='▼ '+(om.waist_start-om.waist_end).toFixed(1)+'cm';}
-  }
-  // official card
+async function loadOff(){
+  const {data:o}=await sb.from('official_measurements').select('*').eq('user_id',UP.id).single();
+  if(!o||!o.start_locked)return;
+  if(o.weight_start){document.getElementById('h-w').textContent=o.weight_end||o.weight_start;if(o.weight_end)document.getElementById('h-wc').textContent='▼ '+(o.weight_start-o.weight_end).toFixed(1)+'kg';}
+  if(o.bodyfat_start){document.getElementById('h-f').textContent=(o.bodyfat_end||o.bodyfat_start)+'%';if(o.bodyfat_end)document.getElementById('h-fc').textContent='▼ '+(o.bodyfat_start-o.bodyfat_end).toFixed(1)+'%';}
+  if(o.waist_start){document.getElementById('h-wt').textContent=o.waist_end||o.waist_start;if(o.waist_end)document.getElementById('h-wtc').textContent='▼ '+(o.waist_start-o.waist_end).toFixed(1)+'cm';}
   let html='';
-  const rows=[
-    {lbl:'體重',from:om.weight_start,to:om.weight_end,unit:'kg'},
-    {lbl:'體脂率',from:om.bodyfat_start,to:om.bodyfat_end,unit:'%'},
-    {lbl:'腰圍',from:om.waist_start,to:om.waist_end,unit:'cm'},
-  ];
-  rows.forEach(r=>{
-    if(!r.from)return;
-    const diff=r.to?-(r.to-r.from).toFixed(1):null;
-    html+=`<div class="off-row"><span class="off-label">${r.lbl}</span><div class="off-vals">
-      <span class="off-from">${r.from}${r.unit}</span>
-      <span class="off-arrow">→</span>
-      <span class="off-to">${r.to||'—'}${r.to?r.unit:''}</span>
-      ${diff?`<span class="off-diff">${diff>0?'+':''}${-diff}${r.unit}</span>`:''}
-    </div></div>`;
+  [{l:'體重',s:o.weight_start,e:o.weight_end,u:'kg'},{l:'體脂率',s:o.bodyfat_start,e:o.bodyfat_end,u:'%'},{l:'腰圍',s:o.waist_start,e:o.waist_end,u:'cm'}].forEach(r=>{
+    if(!r.s)return;const d=r.e?+(r.s-r.e).toFixed(1):null;
+    html+=`<div class="off-row"><span class="off-lbl">${r.l}</span><div class="off-v"><span class="off-fr">${r.s}${r.u}</span><span style="font-size:9px;color:rgba(255,255,255,.3);">→</span><span class="off-to">${r.e||'—'}${r.e?r.u:''}</span>${d?`<span class="off-df">-${d}${r.u}</span>`:''}</div></div>`;
   });
-  document.getElementById('official-data').innerHTML=html;
+  document.getElementById('off-data').innerHTML=html||'<div style="font-size:12px;color:rgba(255,255,255,.4);text-align:center;padding:8px 0;">尚無官方量測數據</div>';
 }
-
-async function loadTodayLog(){
-  const today=new Date().toISOString().split('T')[0];
-  const {data:log}=await sb.from('daily_logs').select('*').eq('user_id',userProfile.id).eq('log_date',today).single();
-  if(!log)return;
-  waterMl=log.water_ml||0;
-  document.getElementById('waterNum').textContent=waterMl;
-  updateDayTotals();
-  if(log.meals)mealLog=log.meals;
-  for(let i=0;i<4;i++)renderMeal(i);
-  document.getElementById('save-status').textContent='✓ 今日已有儲存紀錄';
-  if(log.sleep_hours){const sl=document.getElementById('sleep-slider');if(sl){sl.value=log.sleep_hours;document.getElementById('sleep-v').textContent=log.sleep_hours;}}
-  if(log.mood){currentMood=log.mood;}
-  if(log.note){const n=document.getElementById('daily-note');if(n)n.value=log.note;}
+async function loadToday(){
+  const td=new Date().toISOString().split('T')[0];
+  const {data:l}=await sb.from('daily_logs').select('*').eq('user_id',UP.id).eq('log_date',td).single();
+  if(!l)return;WM=l.water_ml||0;document.getElementById('wn').textContent=WM;
+  if(l.meals)ML=l.meals;for(let i=0;i<4;i++)rMeal(i);
+  document.getElementById('sv-st').textContent='✓ 今日已有紀錄';
+  if(l.sleep_hours){const sl=document.getElementById('sl-in');if(sl){sl.value=l.sleep_hours;document.getElementById('sl-v').textContent=l.sleep_hours;}}
+  if(l.mood)MOOD=l.mood;if(l.note){const n=document.getElementById('dn');if(n)n.value=l.note;}
+  updGoals();
 }
-
 async function loadTrend(){
-  const {data:records}=await sb.from('home_measurements').select('*').eq('user_id',userProfile.id).order('measured_date',{ascending:true}).limit(7);
-  if(!records||records.length<2)return;
-  renderTrendBars('trend-weight-bars','trend-weight-lbls',records,'weight');
-  renderTrendBars('trend-fat-bars','trend-fat-lbls',records,'bodyfat');
-  renderTrendBars('trend-waist-bars','trend-waist-lbls',records,'waist');
+  const {data:r}=await sb.from('home_measurements').select('*').eq('user_id',UP.id).order('measured_date',{ascending:true}).limit(7);
+  if(!r||r.length<2)return;
+  drawCh('cht-w',r,'weight','#1a4a2e');drawCh('cht-f',r,'bodyfat','#ef4444');drawCh('cht-wt',r,'waist','#f59e0b');
 }
-
-function renderTrendBars(barsId,lblsId,records,field){
-  const vals=records.map(r=>r[field]).filter(v=>v);
-  if(vals.length<2)return;
-  const mn=Math.min(...vals)*0.98,mx=Math.max(...vals)*1.02;
-  const barsEl=document.getElementById(barsId);
-  const lblsEl=document.getElementById(lblsId);
-  const colors={weight:'#1a4a2e',bodyfat:'#ef4444',waist:'#f59e0b'};
-  barsEl.innerHTML=records.map((r,i)=>{
-    const v=r[field];if(!v)return '';
-    const h=Math.round(((v-mn)/(mx-mn))*90+10);
-    const isLatest=i===records.length-1;
-    return `<div class="tc-bar${isLatest?' latest':''}" style="height:${h}%;background:${isLatest?'#3ecf8e':colors[field]||'#1a4a2e'};"></div>`;
-  }).join('');
-  lblsEl.innerHTML=records.map(r=>`<div class="tc-lbl">${r.measured_date.slice(5).replace('-','/')}</div>`).join('');
+function drawCh(id,rec,field,col){
+  const el=document.getElementById(id);if(!el)return;
+  const vals=rec.map(r=>parseFloat(r[field])).filter(v=>!isNaN(v)&&v>0);if(vals.length<2){el.innerHTML='<div class="ch-em">量測後自動顯示</div>';return;}
+  const mn=Math.min(...vals),mx=Math.max(...vals),rng=mx-mn||1,pd=10,w=300,h=100;
+  const fr=rec.filter(r=>r[field]);
+  const pts=fr.map((r,i)=>({x:pd+(i/(fr.length-1))*(w-pd*2),y:h-pd-((r[field]-mn)/rng)*(h-pd*2),v:r[field],d:r.measured_date.slice(5).replace('-','/')}));
+  const path=pts.map((p,i)=>(i===0?`M${p.x},${p.y}`:`L${p.x},${p.y}`)).join(' ');
+  el.innerHTML=`<svg viewBox="0 0 ${w} ${h+14}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;"><path d="${path}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" stroke-opacity="0.7"/>${pts.map(p=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="${col}"/><text x="${p.x}" y="${p.y-9}" text-anchor="middle" font-size="9" fill="${col}" font-weight="700">${p.v}</text><text x="${p.x}" y="${h+12}" text-anchor="middle" font-size="8" fill="#5a7a63">${p.d}</text>`).join('')}</svg>`;
 }
-
-// ── DAILY LOG ──
-function addWater(ml){
-  waterMl=Math.max(0,waterMl+ml);
-  document.getElementById('waterNum').textContent=waterMl;
-  updateGoals();
+function addWater(ml){WM=Math.max(0,WM+ml);document.getElementById('wn').textContent=WM;updGoals();}
+function selEx(el,t){ET=t;document.querySelectorAll('.ex-item').forEach(e=>e.classList.remove('on'));el.classList.add('on');updGoals();}
+function selMood(el,v){MOOD=v;document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+async function saveLog(){
+  if(!UP)return;let cal=0,pro=0,cr=0,fat=0;ML.forEach(m=>m.forEach(i=>{cal+=i.c;pro+=i.p;cr+=i.cr;fat+=i.f;}));
+  const td=new Date().toISOString().split('T')[0];
+  const {error}=await sb.from('daily_logs').upsert({user_id:UP.id,log_date:td,meals:ML,total_cal:+cal.toFixed(1),total_protein:+pro.toFixed(1),total_carb:+cr.toFixed(1),total_fat:+fat.toFixed(1),water_ml:WM,exercise_type:ET||null,exercise_minutes:parseInt(document.getElementById('ex-min')?.value)||0,sleep_hours:parseFloat(document.getElementById('sl-in')?.value)||7,mood:MOOD,note:document.getElementById('dn')?.value||null},{onConflict:'user_id,log_date'});
+  if(error){toast('儲存失敗');return;}document.getElementById('sv-st').textContent='✓ 已儲存';toast('✓ 今日紀錄已儲存！');updGoals();
 }
-function selEx(el,type){exType=type;document.querySelectorAll('.ex-item').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');}
-function selMood(el,v){currentMood=v;document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}
-
-async function saveDailyLog(){
-  if(!userProfile){showToast('請先登入');return;}
-  let cal=0,pro=0,carb=0,fat=0;
-  mealLog.forEach(meal=>meal.forEach(item=>{cal+=item.cal;pro+=item.pro;carb+=item.carb;fat+=item.fat;}));
-  const today=new Date().toISOString().split('T')[0];
-  const payload={
-    user_id:userProfile.id,log_date:today,
-    meals:mealLog,total_cal:+cal.toFixed(1),total_protein:+pro.toFixed(1),total_carb:+carb.toFixed(1),total_fat:+fat.toFixed(1),
-    water_ml:waterMl,
-    exercise_type:exType||null,exercise_minutes:parseInt(document.getElementById('ex-min')?.value)||0,
-    sleep_hours:parseFloat(document.getElementById('sleep-slider')?.value)||7,
-    mood:currentMood,
-    note:document.getElementById('daily-note')?.value||null,
-  };
-  const {error}=await sb.from('daily_logs').upsert(payload,{onConflict:'user_id,log_date'});
-  if(error){showToast('儲存失敗：'+error.message);return;}
-  document.getElementById('save-status').textContent='✓ 已儲存';
-  showToast('✓ 今日紀錄已儲存！');
-  updateGoals();
+async function saveMeas(){
+  if(!UP)return;const g=id=>parseFloat(document.getElementById(id)?.value)||null;
+  const td=new Date().toISOString().split('T')[0];
+  const {error}=await sb.from('home_measurements').insert({user_id:UP.id,measured_date:td,weight:g('fm-w'),bodyfat:g('fm-f'),muscle:g('fm-m'),visceral:parseInt(document.getElementById('fm-v')?.value)||null,waist:g('fm-wt'),hip:g('fm-h'),thigh:g('fm-t'),arm:g('fm-a')});
+  if(error&&error.code!=='23505'){toast('儲存失敗');return;}toast('✓ 量測已儲存！');loadTrend();
 }
-
-async function saveHomeMeasurement(){
-  if(!userProfile){showToast('請先登入');return;}
-  const get=id=>parseFloat(document.getElementById(id)?.value)||null;
-  const today=new Date().toISOString().split('T')[0];
-  const payload={
-    user_id:userProfile.id,measured_date:today,
-    weight:get('hm-weight'),bodyfat:get('hm-fat'),muscle:get('hm-muscle'),
-    visceral:parseInt(document.getElementById('hm-visceral')?.value)||null,
-    waist:get('hm-waist'),hip:get('hm-hip'),thigh:get('hm-thigh'),arm:get('hm-arm'),
-  };
-  const {error}=await sb.from('home_measurements').insert(payload);
-  if(error&&error.code!=='23505'){showToast('儲存失敗：'+error.message);return;}
-  showToast('✓ 量測已儲存！');
-  loadTrend();
-  // update hero weight
-  if(payload.weight)document.getElementById('h-weight').textContent=payload.weight;
+function updGoals(){
+  let cal=0,pro=0;ML.forEach(m=>m.forEach(i=>{cal+=i.c;pro+=i.p;}));const ex=parseInt(document.getElementById('ex-min')?.value)||0;
+  setR('rp1','rp1t',pro,50,'gv1',pro.toFixed(1)+'g');setR('rp2','rp2t',WM,2000,'gv2',WM+'ml');setR('rp3','rp3t',cal,1200,'gv3',Math.round(cal)+'');setR('rp4','rp4t',ex,30,'gv4',ex+'分');
 }
-
-// ── MEAL ──
-function renderMeal(m){
-  const items=mealLog[m];
-  const el=document.getElementById('mitems-'+m);
-  if(!items.length){el.innerHTML='<div class="empty-meal">點「+」新增</div>';document.getElementById('mkcal-'+m).textContent='0 大卡';return;}
-  let mCal=0;
-  el.innerHTML=items.map((item,ei)=>{
-    mCal+=item.cal;
-    return`<div class="mi">
-      <div class="mi-icon">${item.icon}</div>
-      <div class="mi-info">
-        <div class="mi-name">${item.name}</div>
-        <div class="mi-macro">${Math.round(item.cal)}大卡・蛋白${item.pro.toFixed(1)}g・醣${item.carb.toFixed(1)}g・脂${item.fat.toFixed(1)}g</div>
+function setR(rid,pid,v,mx,vid,lb){
+  const pct=Math.min(100,Math.round(v/mx*100));const el=document.getElementById(rid);if(el)el.style.strokeDashoffset=107-(107*pct/100);const pt=document.getElementById(pid);if(pt)pt.textContent=pct+'%';const vl=document.getElementById(vid);if(vl)vl.textContent=lb;
+}
+function rMeal(m){
+  const items=ML[m],el=document.getElementById('ml'+m);
+  if(!items||!items.length){el.innerHTML='<div class="em">點「+」新增</div>';document.getElementById('mk'+m).textContent='0 大卡';return;}
+  let mc=0;
+  el.innerHTML=items.map((x,i)=>{mc+=x.c;return`<div class="mi"><div class="mi-ic">${x.ic}</div><div class="mi-inf"><div class="mi-nm">${x.n}</div><div class="mi-mc">${Math.round(x.c)}大卡 · 蛋白${x.p.toFixed(1)}g · 醣${x.cr.toFixed(1)}g · 脂${x.f.toFixed(1)}g</div></div><button class="mi-dl" onclick="rmItem(${m},${i})">✕</button></div>`;}).join('');
+  document.getElementById('mk'+m).textContent=Math.round(mc)+' 大卡';updGoals();
+}
+function rmItem(m,i){ML[m].splice(i,1);rMeal(m);updGoals();document.getElementById('sv-st').textContent='有未儲存的變更';}
+const MN=['早餐','午餐','晚餐','點心'];
+function openModal(mi){CM=mi;SP=null;SS=1;MC='全部';MT='nut';document.getElementById('mt').textContent='新增 → '+MN[mi];rMI();document.getElementById('ov').classList.remove('h');}
+function ovClick(e){if(e.target===document.getElementById('ov'))closeMo();}
+function closeMo(){document.getElementById('ov').classList.add('h');}
+function rMI(){
+  const cc=c=>({優質蛋白素:'cpp',BodyKey:'cpb',XS:'cpx'})[c]||'';
+  document.getElementById('mi').innerHTML=`
+    <div class="mtt"><button class="mtb${MT==='nut'?' on':''}" onclick="sMT('nut')">🌿 紐崔萊</button><button class="mtb${MT==='custom'?' on':''}" onclick="sMT('custom')">✏️ 自行輸入</button></div>
+    <div id="mp-nut" style="display:${MT==='nut'?'flex':'none'};flex-direction:column;flex:1;overflow:hidden;">
+      <div class="mcs"><button class="mcb${MC==='全部'?' on':''}" onclick="sMC('全部')">全部</button><button class="mcb${MC==='優質蛋白素'?' on':''}" onclick="sMC('優質蛋白素')">蛋白素</button><button class="mcb${MC==='BodyKey'?' on':''}" onclick="sMC('BodyKey')">BodyKey</button><button class="mcb${MC==='XS'?' on':''}" onclick="sMC('XS')">XS</button></div>
+      ${SP!==null?`<div class="sp"><div class="sp-t">份數：${PRODS[SP].n}</div><div class="sp-g">${STEPS.map((s,i)=>`<button class="sp-b${SS===i?' on':''}" onclick="sSS(${i})">${s}份</button>`).join('')}</div></div>`:''}
+      <div class="ml" style="flex:1;overflow-y:auto;">${PRODS.filter(p=>MC==='全部'||p.cat===MC).map(p=>{const i=PRODS.indexOf(p),ck=SP===i;return`<div class="mp" onclick="sP(${i})"><div class="mp-ic">${p.ic}</div><div class="mp-inf"><div class="mp-nm">${p.n}</div><div class="mp-mc">${p.s} · ${p.c}大卡 · 蛋白${p.p}g</div><span class="mp-ct ${cc(p.cat)}">${p.cat}</span></div><div class="mp-ck${ck?' on':''}">${ck?'✓':''}</div></div>`;}).join('')}</div>
+      <button class="mc${SP!==null?' on':''}" onclick="cfNut()">${SP!==null?`✓ 確認加入 ${STEPS[SS]}份（${Math.round(PRODS[SP].c*STEPS[SS])}大卡）`:'請先選擇產品'}</button>
+    </div>
+    <div id="mp-custom" style="display:${MT==='custom'?'flex':'none'};flex-direction:column;flex:1;overflow:hidden;">
+      <div class="cpanel" style="flex:1;overflow-y:auto;">
+        <label>食物名稱</label><input class="ci" id="cn" type="text" placeholder="例：水煮蛋、地瓜、雞胸肉">
+        <div class="c2"><div><label>熱量 大卡</label><input class="ci" id="cc" type="number" placeholder="0"></div><div><label>蛋白質 g</label><input class="ci" id="cp" type="number" placeholder="0"></div></div>
+        <div class="c2"><div><label>醣類 g</label><input class="ci" id="ccr" type="number" placeholder="0"></div><div><label>脂肪 g</label><input class="ci" id="cf" type="number" placeholder="0"></div></div>
+        <label>份量</label><div style="display:flex;gap:8px;align-items:center;margin-top:4px;"><input class="ci" id="cs" type="number" placeholder="1" min="0.5" step="0.5" value="1" style="margin-bottom:0;flex:1;"><span style="font-size:11px;color:#5a7a63;">份</span></div>
       </div>
-      <button class="mi-del" onclick="removeItem(${m},${ei})">✕</button>
+      <button class="mc on" onclick="cfCustom()">確認加入</button>
     </div>`;
-  }).join('');
-  document.getElementById('mkcal-'+m).textContent=Math.round(mCal)+' 大卡';
-  updateDayTotals();
 }
-function removeItem(m,ei){mealLog[m].splice(ei,1);renderMeal(m);updateDayTotals();}
+function sMT(t){MT=t;rMI();}
+function sMC(c){MC=c;rMI();}
+function sP(i){SP=i;SS=1;rMI();}
+function sSS(i){SS=i;rMI();}
+function cfNut(){
+  if(SP===null)return;const p=PRODS[SP],s=STEPS[SS];
+  ML[CM].push({n:p.n,ic:p.ic,c:+(p.c*s).toFixed(1),p:+(p.p*s).toFixed(1),cr:+(p.cr*s).toFixed(1),f:+(p.f*s).toFixed(1)});
+  closeMo();rMeal(CM);document.getElementById('sv-st').textContent='有未儲存的變更';
+}
+function cfCustom(){
+  const name=document.getElementById('cn')?.value.trim();if(!name){toast('請輸入食物名稱');return;}
+  const mult=parseFloat(document.getElementById('cs')?.value)||1;
+  const c=+(parseFloat(document.getElementById('cc')?.value||0)*mult).toFixed(1);
+  const p=+(parseFloat(document.getElementById('cp')?.value||0)*mult).toFixed(1);
+  const cr=+(parseFloat(document.getElementById('ccr')?.value||0)*mult).toFixed(1);
+  const f=+(parseFloat(document.getElementById('cf')?.value||0)*mult).toFixed(1);
+  ML[CM].push({n:name,ic:'🍽️',c,p,cr,f});
+  closeMo();rMeal(CM);document.getElementById('sv-st').textContent='有未儲存的變更';
+}
+function setMT(t,el){document.querySelectorAll('.mtab').forEach(b=>{b.className='mtab'+(b===el?' on':'');});document.getElementById('mt-log').style.display=t==='log'?'block':'none';document.getElementById('mt-trend').style.display=t==='trend'?'block':'none';}
+function swBd(t,el){document.querySelectorAll('.bdtab').forEach(b=>b.classList.remove('on'));el.classList.add('on');document.getElementById('bd-ind').style.display=t==='ind'?'block':'none';document.getElementById('bd-team').style.display=t==='team'?'block':'none';}
 
-function updateDayTotals(){
-  let cal=0,pro=0,carb=0,fat=0;
-  mealLog.forEach(meal=>meal.forEach(item=>{cal+=item.cal;pro+=item.pro;carb+=item.carb;fat+=item.fat;}));
-  updateGoals(cal,pro);
+// ADMIN
+async function loadAdm(){await aLC();await aLU();await aLG();await aLO();}
+async function aLC(){
+  const {data}=await sb.from('contests').select('*').eq('is_active',true).single();RCO=data;
+  if(!data)return;const f=id=>document.getElementById(id);
+  if(f('adm-sn'))f('adm-sn').value=data.name||'';if(f('adm-ss'))f('adm-ss').value=data.start_date||'';
+  if(f('adm-se'))f('adm-se').value=data.end_date||'';if(f('adm-smin'))f('adm-smin').value=data.team_min||2;if(f('adm-smax'))f('adm-smax').value=data.team_max||5;
 }
-function updateGoals(cal,pro){
-  let c=0,p=0;
-  mealLog.forEach(meal=>meal.forEach(item=>{c+=item.cal;p+=item.pro;}));
-  cal=cal??c;pro=pro??p;
-  const pPct=Math.min(100,Math.round(pro/50*100));
-  const wPct=Math.min(100,Math.round(waterMl/2000*100));
-  const cPct=Math.min(100,Math.round(cal/1200*100));
-  const ePct=Math.min(100,Math.round((parseInt(document.getElementById('ex-min')?.value)||0)/30*100));
-  // rings
-  const circum=107;
-  setRing('ring-pro',circum,pPct);setRing('ring-water',circum,wPct);setRing('ring-kcal',circum,cPct);setRing('ring-ex',circum,ePct);
-  document.getElementById('ring-pro-pct').textContent=pPct+'%';
-  document.getElementById('ring-water-pct').textContent=wPct+'%';
-  document.getElementById('ring-kcal-pct').textContent=cPct+'%';
-  document.getElementById('ring-ex-pct').textContent=ePct+'%';
-  document.getElementById('goal-pro').textContent=pro.toFixed(1)+'g';
-  document.getElementById('goal-water').textContent=waterMl+'ml';
-  document.getElementById('goal-kcal').textContent=Math.round(cal);
-  document.getElementById('goal-ex').textContent=(parseInt(document.getElementById('ex-min')?.value)||0)+'分';
-  // bars
-  document.getElementById('bfill-pro').style.width=pPct+'%';document.getElementById('bnum-pro').textContent=pro.toFixed(1)+'/50g';
-  document.getElementById('bfill-water').style.width=wPct+'%';document.getElementById('bnum-water').textContent=waterMl+'/2000ml';
-  document.getElementById('bfill-kcal').style.width=cPct+'%';document.getElementById('bnum-kcal').textContent=Math.round(cal)+'/1200';
-  document.getElementById('bfill-ex').style.width=ePct+'%';document.getElementById('bnum-ex').textContent=(parseInt(document.getElementById('ex-min')?.value)||0)+'/30分';
+async function aLU(){
+  const {data}=await sb.from('users').select('*,groups(name,emoji)').order('created_at',{ascending:false});RU=data||[];
+  const pend=RU.filter(u=>u.status==='pending'),appr=RU.filter(u=>u.status==='approved');
+  const tl=document.getElementById('adm-tot');if(tl)tl.textContent=RU.length;const pn=document.getElementById('adm-pn');if(pn)pn.textContent=pend.length;
+  const tl2=u=>({individual:'個人組',team:'團體組',both:'兩組'}[u.contest_type]||'');
+  const pl=document.getElementById('adm-pl');
+  if(pl){pl.innerHTML=!pend.length?'<div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">目前沒有待審核學員 ✓</div>':pend.map(u=>`<div class="adm-c"><div class="adm-nm">${u.name}</div><div class="adm-em">${u.email||''}</div><div class="adm-mt">${tl2(u)} · ${u.height_cm||''}cm · ${u.age||''}歲 · ${u.gender==='female'?'女':'男'}</div><div class="adm-ac"><button class="adm-bg" onclick="aUS('${u.id}','approved')">✓ 通過</button><button class="adm-br" onclick="aUS('${u.id}','rejected')">✕ 拒絕</button></div></div>`).join('');}
+  const al=document.getElementById('adm-al');
+  if(al){al.innerHTML=!appr.length?'<div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">尚無已通過學員</div>':appr.map(u=>`<div class="adm-c" style="display:flex;align-items:center;gap:10px;"><div style="flex:1;min-width:0;"><div class="adm-nm">${u.name}</div><div class="adm-em">${u.email||''}</div><div style="font-size:10px;color:#5a7a63;margin-top:2px;">${u.groups?u.groups.emoji+' '+u.groups.name:'未分組'}</div></div><button class="adm-bo" style="width:auto;padding:6px 12px;margin-top:0;" onclick="aMG('${u.id}','${u.name}')">調整</button></div>`).join('');}
 }
-function setRing(id,circum,pct){
-  const el=document.getElementById(id);
-  if(el)el.style.strokeDashoffset=circum-(circum*pct/100);
+async function aUS(uid,status){
+  await sb.from('users').update({status}).eq('id',uid);toast(status==='approved'?'✓ 已通過':'✕ 已拒絕');
+  if(status==='approved'){const {data:ex}=await sb.from('official_measurements').select('id').eq('user_id',uid).single();if(!ex)await sb.from('official_measurements').insert({user_id:uid,contest_id:RCO?.id});}
+  await aLU();
 }
-
-// ── MODAL ──
-const MEAL_NAMES=['早餐','午餐','晚餐','點心'];
-function openModal(mealIdx){
-  currentMeal=mealIdx;selectedProd=null;selectedServing=1;
-  document.getElementById('modal-title').textContent='新增 → '+MEAL_NAMES[mealIdx];
-  document.getElementById('serving-panel').style.display='none';
-  modalCat='全部';
-  document.querySelectorAll('.mcat-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.mcat-btn')[0].classList.add('active');
-  const btn=document.getElementById('mc-nut');btn.textContent='請先選擇產品';btn.className='modal-confirm';
-  setMType('nut',document.querySelectorAll('.mtype-btn')[0]);
-  ['c-name','c-cal','c-pro','c-carb','c-fat'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('c-serving').value='1';
-  renderModalList();
-  document.getElementById('overlay').classList.remove('hidden');
+async function aLG(){
+  const {data}=await sb.from('groups').select('*').order('created_at');RG=data||[];
+  const el=document.getElementById('adm-gl');if(!el)return;
+  if(!RG.length){el.innerHTML='<div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">尚無組別</div>';return;}
+  el.innerHTML=RG.map(g=>{const mb=RU.filter(u=>u.group_id===g.id&&u.status==='approved');return`<div class="adm-c"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:13px;font-weight:700;color:#0d2b1a;">${g.emoji||''} ${g.name}</div><span style="font-size:10px;color:#5a7a63;background:#f2f8f5;padding:2px 8px;border-radius:10px;">${mb.length}人</span></div>${mb.map(m=>`<div style="font-size:12px;color:#0d2b1a;padding:2px 0;">• ${m.name}</div>`).join('')}${!mb.length?'<div style="font-size:11px;color:#bbb;">尚無成員</div>':''}<button class="adm-bo" onclick="aAM('${g.id}','${g.name}')">＋ 新增成員</button></div>`;}).join('');
 }
-function overlayClick(e){if(e.target===document.getElementById('overlay'))document.getElementById('overlay').classList.add('hidden');}
-function setMType(t,el){mType=t;document.querySelectorAll('.mtype-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');document.getElementById('panel-nut').style.display=t==='nut'?'flex':'none';document.getElementById('panel-custom').style.display=t==='custom'?'flex':'none';}
-function setMCat(c,el){modalCat=c;document.querySelectorAll('.mcat-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderModalList();}
-function renderModalList(){
-  const catClass=c=>({優質蛋白素:'pp-pro',BodyKey:'pp-body',XS:'pp-xs'}[c]||'');
-  const f=PRODUCTS.filter(p=>modalCat==='全部'||p.cat===modalCat);
-  document.getElementById('modal-list').innerHTML=f.map(p=>{
-    const i=PRODUCTS.indexOf(p),checked=selectedProd===i;
-    return`<div class="modal-prod" onclick="selectProd(${i})">
-      <div class="mp-icon">${p.icon}</div>
-      <div class="mp-info"><div class="mp-name">${p.name}</div><div class="mp-macro">${p.serving} · ${p.cal}大卡 · 蛋白${p.pro}g</div><span class="mp-cat ${catClass(p.cat)}">${p.cat}</span></div>
-      <div class="mp-check${checked?' on':''}">${checked?'✓':''}</div>
-    </div>`;
-  }).join('');
+async function aLO(){
+  const appr=RU.filter(u=>u.status==='approved');const {data:oms}=await sb.from('official_measurements').select('*');
+  const el=document.getElementById('adm-ol');if(!el)return;
+  if(!appr.length){el.innerHTML='<div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">尚無已通過學員</div>';return;}
+  el.innerHTML=appr.map(u=>{const om=(oms||[]).find(o=>o.user_id===u.id)||{};const lk=om.end_locked;return`<div class="adm-c"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><div class="adm-nm">${u.name}</div><span class="tag ${lk?'tg':'ta'}">${lk?'✓ 完成':'待填入'}</span></div><div class="adm-2c"><div>${!om.start_locked?`<div class="adm-fl" style="margin-bottom:4px;"><label>開賽體重 kg</label><input id="sw${u.id}" type="number" step="0.1" placeholder="—"></div><div class="adm-fl" style="margin-bottom:4px;"><label>開賽體脂 %</label><input id="sf${u.id}" type="number" step="0.1" placeholder="—"></div><div class="adm-fl" style="margin-bottom:6px;"><label>開賽腰圍 cm</label><input id="swt${u.id}" type="number" step="0.5" placeholder="—"></div><button onclick="aSS('${u.id}','${u.name}','${om.id||''}')" style="width:100%;padding:7px;background:#0d2b1a;color:#fff;border:none;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">儲存開賽</button>`:`<div style="font-size:11px;color:#0d2b1a;line-height:1.7;">體重：${om.weight_start} kg<br>體脂：${om.bodyfat_start} %<br>腰圍：${om.waist_start||'—'} cm</div>`}</div><div>${lk?`<div style="font-size:11px;color:#0d2b1a;line-height:1.7;">體重：${om.weight_end} kg<br>體脂：${om.bodyfat_end} %</div>`:om.start_locked?`<div class="adm-fl" style="margin-bottom:4px;"><label>結賽體重 kg</label><input id="ew${u.id}" type="number" step="0.1" placeholder="—"></div><div class="adm-fl" style="margin-bottom:6px;"><label>結賽體脂 %</label><input id="ef${u.id}" type="number" step="0.1" placeholder="—"></div><button onclick="aSE('${u.id}','${u.name}')" style="width:100%;padding:7px;background:#3ecf8e;color:#0d2b1a;border:none;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">儲存並鎖定</button>`:'<div style="font-size:11px;color:#bbb;">先填開賽數值</div>'}</div></div></div>`;}).join('');
 }
-function selectProd(i){selectedProd=i;selectedServing=1;
-  const p=PRODUCTS[i];
-  document.getElementById('serving-panel').style.display='block';
-  document.getElementById('sp-name-title').textContent='選擇份數：'+p.name;
-  renderServingGrid();updateNutBtn();renderModalList();
+async function aSS(uid,name,omId){
+  const w=document.getElementById('sw'+uid)?.value,f=document.getElementById('sf'+uid)?.value;if(!w||!f){toast('請填體重和體脂');return;}
+  const payload={user_id:uid,contest_id:RCO?.id,weight_start:parseFloat(w),bodyfat_start:parseFloat(f),waist_start:parseFloat(document.getElementById('swt'+uid)?.value||0),start_locked:true};
+  let error;if(omId){({error}=await sb.from('official_measurements').update(payload).eq('id',omId));}else{({error}=await sb.from('official_measurements').insert(payload));}
+  if(error){toast('失敗：'+error.message);return;}toast('✓ '+name+' 開賽數值已儲存！');await aLO();
 }
-function renderServingGrid(){document.getElementById('sp-grid').innerHTML=STEPS.map((s,i)=>`<button class="sp-btn${selectedServing===i?' active':''}" onclick="selectServing(${i})">${s}份</button>`).join('');}
-function selectServing(i){selectedServing=i;renderServingGrid();updateNutBtn();}
-function updateNutBtn(){
-  if(selectedProd===null)return;
-  const p=PRODUCTS[selectedProd],s=STEPS[selectedServing];
-  const btn=document.getElementById('mc-nut');
-  btn.textContent=`✓ 確認加入 ${s}份（${Math.round(p.cal*s)}大卡）`;
-  btn.className='modal-confirm ready';
+async function aSE(uid,name){
+  const w=document.getElementById('ew'+uid)?.value,f=document.getElementById('ef'+uid)?.value;if(!w||!f){toast('請填結賽體重和體脂');return;}
+  const {error}=await sb.from('official_measurements').update({weight_end:parseFloat(w),bodyfat_end:parseFloat(f),end_locked:true}).eq('user_id',uid);
+  if(error){toast('失敗');return;}toast('✓ '+name+' 結賽數值已鎖定！');await aLO();
 }
-function confirmNut(){
-  if(selectedProd===null)return;
-  const p=PRODUCTS[selectedProd],s=STEPS[selectedServing];
-  mealLog[currentMeal].push({type:'nutrilite',name:p.name,icon:p.icon,cal:+(p.cal*s).toFixed(1),pro:+(p.pro*s).toFixed(1),carb:+(p.carb*s).toFixed(1),fat:+(p.fat*s).toFixed(1),serving:s});
-  document.getElementById('overlay').classList.add('hidden');
-  renderMeal(currentMeal);updateDayTotals();
-  document.getElementById('save-status').textContent='有未儲存的變更';
+async function admSaveSet(){
+  if(!RCO)return;
+  const {error}=await sb.from('contests').update({name:document.getElementById('adm-sn')?.value||'',start_date:document.getElementById('adm-ss')?.value||'',end_date:document.getElementById('adm-se')?.value||'',team_min:parseInt(document.getElementById('adm-smin')?.value)||2,team_max:parseInt(document.getElementById('adm-smax')?.value)||5}).eq('id',RCO.id);
+  if(error){toast('失敗');return;}toast('✓ 設定已儲存！');
 }
-function confirmCustom(){
-  const name=document.getElementById('c-name').value.trim();
-  if(!name){showToast('請輸入食物名稱');return;}
-  const mult=parseFloat(document.getElementById('c-serving').value)||1;
-  const cal=+(parseFloat(document.getElementById('c-cal').value||0)*mult).toFixed(1);
-  const pro=+(parseFloat(document.getElementById('c-pro').value||0)*mult).toFixed(1);
-  const carb=+(parseFloat(document.getElementById('c-carb').value||0)*mult).toFixed(1);
-  const fat=+(parseFloat(document.getElementById('c-fat').value||0)*mult).toFixed(1);
-  mealLog[currentMeal].push({type:'custom',name,icon:'🍽️',cal,pro,carb,fat,serving:mult});
-  document.getElementById('overlay').classList.add('hidden');
-  renderMeal(currentMeal);updateDayTotals();
-  document.getElementById('save-status').textContent='有未儲存的變更';
+function aMG(uid,name){
+  const sel=RG.map(g=>`<option value="${g.id}">${g.emoji||''} ${g.name}</option>`).join('');
+  document.getElementById('mt').textContent=name+' — 調整組別';
+  document.getElementById('mi').innerHTML=`<div style="padding:14px;"><label style="font-size:11px;font-weight:700;color:#5a7a63;display:block;margin-bottom:6px;">選擇組別</label><select id="adm-ms" style="width:100%;padding:10px 12px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:13px;font-family:inherit;color:#0d2b1a;margin-bottom:12px;">${sel||'<option>先新增組別</option>'}</select><button onclick="aCMG('${uid}','${name}')" class="mc on" style="margin:0;width:100%;">確認</button></div>`;
+  document.getElementById('ov').classList.remove('h');
 }
-
-// ── LEADERBOARD ──
-function switchBoard(type,el){
-  document.querySelectorAll('.board-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
-  document.getElementById('board-ind').style.display=type==='ind'?'block':'none';
-  document.getElementById('board-team').style.display=type==='team'?'block':'none';
+async function aCMG(uid,name){
+  const sel=document.getElementById('adm-ms');if(!sel)return;await sb.from('users').update({group_id:sel.value}).eq('id',uid);closeMo();toast('✓ '+name+' 組別已更新');await aLU();await aLG();
 }
-
-// ── NAV ──
-function goTab(name,el){
-  document.querySelectorAll('.btab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
-  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
-  document.getElementById('screen-'+name).classList.remove('hidden');
-  // 切到管理頁時載入資料
-  if(name==='admin') loadAdminData();
+function aAM(gid,gname){
+  const un=RU.filter(u=>u.status==='approved'&&u.group_id!==gid);const sel=un.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  document.getElementById('mt').textContent='新增成員至 '+gname;
+  document.getElementById('mi').innerHTML=`<div style="padding:14px;"><label style="font-size:11px;font-weight:700;color:#5a7a63;display:block;margin-bottom:6px;">選擇學員</label><select id="adm-as" style="width:100%;padding:10px 12px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:13px;font-family:inherit;color:#0d2b1a;margin-bottom:12px;">${sel||'<option>沒有可加入的學員</option>'}</select><button onclick="aCAM('${gid}','${gname}')" class="mc on" style="margin:0;width:100%;">確認加入</button></div>`;
+  document.getElementById('ov').classList.remove('h');
 }
-function setMeasTab(t,el){
-  document.querySelectorAll('.mtab').forEach(b=>{b.className='mtab'+(b===el?' active':'');});
-  document.getElementById('meas-log').style.display=t==='log'?'block':'none';
-  document.getElementById('meas-trend').style.display=t==='trend'?'block':'none';
+async function aCAM(gid,gname){
+  const sel=document.getElementById('adm-as');if(!sel||!sel.value)return;await sb.from('users').update({group_id:gid}).eq('id',sel.value);closeMo();toast('✓ 成員已加入 '+gname);await aLU();await aLG();
 }
-
-// ── UTILS ──
-function show(id,d='block'){const el=document.getElementById(id);if(el){el.style.display=d;}}
-function hide(id){const el=document.getElementById(id);if(el)el.style.display='none';}
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
+function admNewGrp(){
+  document.getElementById('mt').textContent='新增組別';
+  document.getElementById('mi').innerHTML=`<div style="padding:14px;"><label style="font-size:11px;font-weight:700;color:#5a7a63;display:block;margin-bottom:6px;">組別名稱（可加 emoji）</label><input id="adm-ng" type="text" placeholder="例：🔥 燃脂組" style="width:100%;padding:10px 12px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:14px;font-family:inherit;color:#0d2b1a;margin-bottom:12px;"><button onclick="aCNG()" class="mc on" style="margin:0;width:100%;">建立</button></div>`;
+  document.getElementById('ov').classList.remove('h');setTimeout(()=>document.getElementById('adm-ng')?.focus(),100);
 }
-
-// ── ADMIN FUNCTIONS ──
-let admAllUsers=[], admAllGroups=[], admContestData=null;
-
-async function loadAdminData(){
-  await admLoadContest();
-  await admLoadUsers();
-  await admLoadGroups();
-  await admLoadOfficial();
+async function aCNG(){
+  const val=document.getElementById('adm-ng')?.value.trim();if(!val){toast('請輸入組名');return;}
+  const parts=val.split(' ');let emoji='🌿',name=val;if(parts.length>1&&/\p{Emoji}/u.test(parts[0])){emoji=parts[0];name=parts.slice(1).join(' ');}
+  await sb.from('groups').insert({name,emoji,contest_id:RCO?.id});closeMo();toast('✓ 組別已新增');await aLG();
 }
-
-async function admLoadContest(){
-  const {data}=await sb.from('contests').select('*').eq('is_active',true).single();
-  admContestData=data;
-  if(data){
-    const el=document.getElementById('adm-s-name');
-    if(el) el.value=data.name||'';
-    const s=document.getElementById('adm-s-start');
-    if(s) s.value=data.start_date||'';
-    const e=document.getElementById('adm-s-end');
-    if(e) e.value=data.end_date||'';
-    const mn=document.getElementById('adm-s-min');
-    if(mn) mn.value=data.team_min||2;
-    const mx=document.getElementById('adm-s-max');
-    if(mx) mx.value=data.team_max||5;
-  }
-}
-
-async function admLoadUsers(){
-  const {data}=await sb.from('users').select('*,groups(name,emoji)').order('created_at',{ascending:false});
-  admAllUsers=data||[];
-  // stats
-  const pending=admAllUsers.filter(u=>u.status==='pending');
-  const approved=admAllUsers.filter(u=>u.status==='approved');
-  const tp=document.getElementById('adm-total');
-  const pp=document.getElementById('adm-pending');
-  if(tp) tp.textContent=admAllUsers.length;
-  if(pp) pp.textContent=pending.length;
-  // pending list
-  const pel=document.getElementById('adm-pending-list');
-  if(pel){
-    if(!pending.length){
-      pel.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">目前沒有待審核學員 ✓</div>';
-    } else {
-      pel.innerHTML=pending.map(u=>`
-        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);">${u.name}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${u.email||''}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${u.height_cm||''}cm · ${u.age||''}歲 · ${u.gender==='female'?'女':'男'} · ${{individual:'個人組',team:'團體組',both:'兩組'}[u.contest_type]||''}</div>
-          <div style="display:flex;gap:8px;margin-top:10px;">
-            <button onclick="admUpdateStatus('${u.id}','approved')" style="flex:1;padding:8px;background:var(--acc);color:var(--g1);border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">✓ 通過</button>
-            <button onclick="admUpdateStatus('${u.id}','rejected')" style="flex:1;padding:8px;background:#fff;color:var(--red);border:1.5px solid var(--red);border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">✕ 拒絕</button>
-          </div>
-        </div>`).join('');
-    }
-  }
-  // approved list
-  const ael=document.getElementById('adm-approved-list');
-  if(ael){
-    if(!approved.length){
-      ael.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">尚無已通過學員</div>';
-    } else {
-      ael.innerHTML=approved.map(u=>`
-        <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:11px 12px;display:flex;align-items:center;gap:10px;">
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:700;color:var(--text);">${u.name}</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:1px;word-break:break-all;">${u.email||''}</div>
-            <div style="font-size:10px;color:var(--muted);margin-top:2px;">${u.groups?u.groups.emoji+' '+u.groups.name:'未分組'}</div>
-          </div>
-          <button onclick="admOpenMoveGroup('${u.id}','${u.name}')" style="padding:6px 12px;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;">調整組別</button>
-        </div>`).join('');
-    }
-  }
-}
-
-async function admUpdateStatus(userId, status){
-  const {error}=await sb.from('users').update({status}).eq('id',userId);
-  if(error){showToast('操作失敗');return;}
-  showToast(status==='approved'?'✓ 已通過審核':'✕ 已拒絕');
-  await admLoadUsers();
-}
-
-async function admLoadGroups(){
-  const {data}=await sb.from('groups').select('*').order('created_at');
-  admAllGroups=data||[];
-  const el=document.getElementById('adm-groups-list');
-  if(!el) return;
-  if(!admAllGroups.length){
-    el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">尚無組別，點上方新增</div>';
-    return;
-  }
-  el.innerHTML=admAllGroups.map(g=>{
-    const members=admAllUsers.filter(u=>u.group_id===g.id&&u.status==='approved');
-    return`<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-size:13px;font-weight:700;color:var(--text);">${g.emoji||''} ${g.name}</div>
-        <span style="font-size:10px;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:10px;">${members.length}人</span>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px;">
-        ${members.map(m=>`<div style="font-size:12px;color:var(--text);">• ${m.name}</div>`).join('')}
-        ${!members.length?'<div style="font-size:11px;color:#bbb;">尚無成員</div>':''}
-      </div>
-      <button onclick="admOpenAddMember('${g.id}','${g.name}')" style="width:100%;margin-top:8px;padding:7px;background:var(--bg);border:1.5px solid var(--border);border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--g1);">＋ 新增成員</button>
-    </div>`;
-  }).join('');
-}
-
-async function admLoadOfficial(){
-  const approved=admAllUsers.filter(u=>u.status==='approved');
-  const {data:oms}=await sb.from('official_measurements').select('*');
-  const el=document.getElementById('adm-official-list');
-  if(!el) return;
-  if(!approved.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);text-align:center;padding:12px;">尚無已通過學員</div>';return;}
-  el.innerHTML=approved.map(u=>{
-    const om=(oms||[]).find(o=>o.user_id===u.id)||{};
-    const locked=om.end_locked;
-    return`<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-size:13px;font-weight:700;color:var(--text);">${u.name}</div>
-        <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;${locked?'background:#d1fae5;color:#065f46':'background:#fef3c7;color:#92400e'}">${locked?'✓ 完成':'待填入'}</span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-        <div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;">開賽數值</div>
-          <div style="font-size:11px;color:var(--text);">體重：${om.weight_start||'—'} kg</div>
-          <div style="font-size:11px;color:var(--text);">體脂：${om.bodyfat_start||'—'} %</div>
-          <div style="font-size:11px;color:var(--text);">腰圍：${om.waist_start||'—'} cm</div>
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;">結賽數值</div>
-          ${locked?`
-            <div style="font-size:11px;color:var(--text);">體重：${om.weight_end} kg</div>
-            <div style="font-size:11px;color:var(--text);">體脂：${om.bodyfat_end} %</div>
-            <div style="font-size:11px;color:var(--text);">腰圍：${om.waist_end||'—'} cm</div>
-          `:`
-            <input id="ew-${u.id}" type="number" placeholder="體重 kg" step="0.1" style="width:100%;padding:6px 8px;border:1.5px solid var(--acc);border-radius:8px;font-size:12px;font-family:inherit;margin-bottom:4px;">
-            <input id="ef-${u.id}" type="number" placeholder="體脂 %" step="0.1" style="width:100%;padding:6px 8px;border:1.5px solid var(--acc);border-radius:8px;font-size:12px;font-family:inherit;">
-          `}
-        </div>
-      </div>
-      ${!om.start_locked?`
-        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:700;">填入開賽數值</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
-          <input id="sw-${u.id}" type="number" placeholder="體重" step="0.1" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;">
-          <input id="sf-${u.id}" type="number" placeholder="體脂%" step="0.1" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;">
-          <input id="swaist-${u.id}" type="number" placeholder="腰圍" step="0.5" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;">
-        </div>
-        <button onclick="admSaveStart('${u.id}','${u.name}','${om.id||''}')" style="width:100%;padding:8px;background:var(--g1);color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">儲存開賽數值</button>
-      `:''}
-      ${!locked&&om.start_locked?`<button onclick="admSaveEnd('${u.id}','${u.name}')" style="width:100%;padding:8px;background:var(--acc);color:var(--g1);border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px;">儲存結賽並鎖定</button>`:''}
-    </div>`;
-  }).join('');
-}
-
-async function admSaveStart(userId,name,omId){
-  const w=document.getElementById('sw-'+userId)?.value;
-  const f=document.getElementById('sf-'+userId)?.value;
-  if(!w||!f){showToast('請填入體重和體脂率');return;}
-  const payload={user_id:userId,contest_id:admContestData?.id,weight_start:parseFloat(w),bodyfat_start:parseFloat(f),waist_start:parseFloat(document.getElementById('swaist-'+userId)?.value||0),start_locked:true};
-  let error;
-  if(omId){({error}=await sb.from('official_measurements').update(payload).eq('id',omId));}
-  else{({error}=await sb.from('official_measurements').insert(payload));}
-  if(error){showToast('儲存失敗：'+error.message);return;}
-  showToast('✓ '+name+' 開賽數值已儲存！');
-  await admLoadOfficial();
-}
-
-async function admSaveEnd(userId,name){
-  const w=document.getElementById('ew-'+userId)?.value;
-  const f=document.getElementById('ef-'+userId)?.value;
-  if(!w||!f){showToast('請填入結賽體重和體脂率');return;}
-  const {error}=await sb.from('official_measurements').update({weight_end:parseFloat(w),bodyfat_end:parseFloat(f),end_locked:true}).eq('user_id',userId);
-  if(error){showToast('儲存失敗：'+error.message);return;}
-  showToast('✓ '+name+' 結賽數值已鎖定！');
-  await admLoadOfficial();
-}
-
-function admOpenMoveGroup(userId,name){
-  const sel=admAllGroups.map(g=>`<option value="${g.id}">${g.emoji||''} ${g.name}</option>`).join('');
-  document.getElementById('modal-title').textContent=name+' — 調整組別';
-  document.getElementById('panel-nut').style.display='none';
-  document.getElementById('panel-custom').style.display='none';
-  const modal=document.querySelector('.modal');
-  // reuse modal with custom content
-  const existing=document.getElementById('adm-modal-body');
-  if(existing) existing.remove();
-  const div=document.createElement('div');
-  div.id='adm-modal-body';
-  div.style.cssText='padding:14px;flex:1;';
-  div.innerHTML=`<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px;">選擇組別</label>
-    <select id="adm-move-sel" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;color:var(--text);margin-bottom:14px;">${sel}</select>
-    <button onclick="admConfirmMoveGroup('${userId}','${name}')" style="width:100%;padding:12px;background:var(--acc);color:var(--g1);border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">確認</button>`;
-  modal.appendChild(div);
-  document.getElementById('overlay').classList.remove('hidden');
-}
-
-async function admConfirmMoveGroup(userId,name){
-  const sel=document.getElementById('adm-move-sel');
-  if(!sel) return;
-  const gid=sel.value;
-  await sb.from('users').update({group_id:gid}).eq('id',userId);
-  document.getElementById('overlay').classList.add('hidden');
-  showToast('✓ '+name+' 組別已更新');
-  await admLoadUsers();await admLoadGroups();
-}
-
-function admOpenAddMember(groupId,groupName){
-  const unassigned=admAllUsers.filter(u=>u.status==='approved'&&(!u.group_id||u.group_id!==groupId));
-  const sel=unassigned.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
-  document.getElementById('modal-title').textContent='新增成員至 '+groupName;
-  document.getElementById('panel-nut').style.display='none';
-  document.getElementById('panel-custom').style.display='none';
-  const existing=document.getElementById('adm-modal-body');
-  if(existing) existing.remove();
-  const div=document.createElement('div');
-  div.id='adm-modal-body';
-  div.style.cssText='padding:14px;flex:1;';
-  div.innerHTML=`<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px;">選擇學員</label>
-    <select id="adm-add-sel" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;color:var(--text);margin-bottom:14px;">${sel||'<option>沒有可加入的學員</option>'}</select>
-    <button onclick="admConfirmAddMember('${groupId}','${groupName}')" style="width:100%;padding:12px;background:var(--acc);color:var(--g1);border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">確認加入</button>`;
-  const modal=document.querySelector('.modal');
-  modal.appendChild(div);
-  document.getElementById('overlay').classList.remove('hidden');
-}
-
-async function admConfirmAddMember(groupId,groupName){
-  const sel=document.getElementById('adm-add-sel');
-  if(!sel||!sel.value) return;
-  await sb.from('users').update({group_id:groupId}).eq('id',sel.value);
-  document.getElementById('overlay').classList.add('hidden');
-  showToast('✓ 成員已加入 '+groupName);
-  await admLoadUsers();await admLoadGroups();
-}
-
-function openNewGroupAdm(){
-  document.getElementById('modal-title').textContent='新增組別';
-  document.getElementById('panel-nut').style.display='none';
-  document.getElementById('panel-custom').style.display='none';
-  const existing=document.getElementById('adm-modal-body');
-  if(existing) existing.remove();
-  const div=document.createElement('div');
-  div.id='adm-modal-body';
-  div.style.cssText='padding:14px;flex:1;';
-  div.innerHTML=`<label style="font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px;">組別名稱（可加 emoji）</label>
-    <input id="adm-new-grp" type="text" placeholder="例：🔥 燃脂組" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;color:var(--text);margin-bottom:14px;">
-    <button onclick="admConfirmNewGroup()" style="width:100%;padding:12px;background:var(--acc);color:var(--g1);border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">建立組別</button>`;
-  const modal=document.querySelector('.modal');
-  modal.appendChild(div);
-  document.getElementById('overlay').classList.remove('hidden');
-  setTimeout(()=>document.getElementById('adm-new-grp')?.focus(),100);
-}
-
-async function admConfirmNewGroup(){
-  const val=document.getElementById('adm-new-grp')?.value.trim();
-  if(!val){showToast('請輸入組名');return;}
-  const parts=val.split(' ');
-  let emoji='🌿',name=val;
-  if(parts.length>1&&/\p{Emoji}/u.test(parts[0])){emoji=parts[0];name=parts.slice(1).join(' ');}
-  await sb.from('groups').insert({name,emoji,contest_id:admContestData?.id});
-  document.getElementById('overlay').classList.add('hidden');
-  showToast('✓ 組別已新增：'+val);
-  await admLoadGroups();
-}
-
-async function admSaveSettings(){
-  if(!admContestData){showToast('尚無比賽資料');return;}
-  const {error}=await sb.from('contests').update({
-    name:document.getElementById('adm-s-name')?.value||'',
-    start_date:document.getElementById('adm-s-start')?.value||'',
-    end_date:document.getElementById('adm-s-end')?.value||'',
-    team_min:parseInt(document.getElementById('adm-s-min')?.value)||2,
-    team_max:parseInt(document.getElementById('adm-s-max')?.value)||5,
-  }).eq('id',admContestData.id);
-  if(error){showToast('儲存失敗');return;}
-  showToast('✓ 設定已儲存！');
-  await admLoadContest();
-}
-
-// ── START ──
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
 init();
 </script>
 </body>
