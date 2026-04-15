@@ -390,11 +390,16 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
       <div class="hero">
         <div class="hero-gr" id="h-gr">早安</div>
         <div class="hero-nm" id="h-nm">— 👋</div>
-        <div class="hs-grid">
+       <div class="hs-grid">
           <div class="hs"><div class="hs-val" id="h-w">—</div><div class="hs-lbl">體重 kg</div><div class="hs-ch" id="h-wc"> </div></div>
           <div class="hs"><div class="hs-val" id="h-f">—</div><div class="hs-lbl">體脂 %</div><div class="hs-ch" id="h-fc"> </div></div>
           <div class="hs"><div class="hs-val" id="h-wt">—</div><div class="hs-lbl">腰圍 cm</div><div class="hs-ch" id="h-wtc"> </div></div>
         </div>
+        
+        <div id="initial-data-row" style="display:none; margin-top:14px; padding:10px 12px; background:rgba(0,0,0,0.15); border-radius:12px; font-size:11px; color:rgba(255,255,255,0.75); text-align:center; letter-spacing:0.5px;">
+          起點紀錄：體重 <span id="start-w" style="color:#fff;font-weight:700;">--</span>kg <span style="opacity:0.4;margin:0 4px;">|</span> 體脂 <span id="start-f" style="color:#fff;font-weight:700;">--</span>% <span style="opacity:0.4;margin:0 4px;">|</span> 腰圍 <span id="start-wt" style="color:#fff;font-weight:700;">--</span>cm
+        </div>
+        
       </div>
       <div class="goals-grid">
         <div class="gc"><div class="gr"><svg viewBox="0 0 42 42"><circle class="rbg" cx="21" cy="21" r="17"/><circle class="rfg" cx="21" cy="21" r="17" stroke="#3ecf8e" stroke-dasharray="107" id="rp1"/></svg><div class="rpct" id="rp1t">0%</div></div><div><div class="gi-l">蛋白質</div><div class="gi-v" id="gv1">0g</div><div class="gi-t" id="gt1">目標 —g</div></div></div>
@@ -695,6 +700,7 @@ const COMMON_FOODS=[
 let CU=null,UP=null,ML=[[],[],[],[]],WM=0,CM=0,SP=null,SS=1,MC='全部',MT_='nut',MOOD=3,ET='',ET_MET=0,RD={},RU=[],RG=[],RCO=null;
 let LATEST_W=60,PRO_GOAL=72,WATER_GOAL=1800,CAL_LIMIT=1664;
 let savedSections={food:false,water:false,ex:false,sleep:false,mood:false};
+const MN = ['早餐', '午餐', '晚餐', '點心'];
 
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
@@ -852,7 +858,7 @@ function calcHealth(p,w){
   const tdee=Math.round(bmr*1.375);
   const tgt=Math.round(tdee*0.8);
   CAL_LIMIT=tgt;
-  document.getElementById('gt3').textContent='上限 '+CAL_LIMIT;
+  document.getElementById('gt3').textContent='上限 '+CAL_LIMIT+'大卡';
   let bl='正常';if(bmi<18.5)bl='過輕';else if(bmi>=24&&bmi<27)bl='過重';else if(bmi>=27)bl='肥胖';
   document.getElementById('cc-bmi').textContent=bmi;document.getElementById('cc-bmi-l').textContent=bl;
   document.getElementById('cc-bmr').innerHTML=bmr+'<span class="cc-u"> kcal</span>';
@@ -921,10 +927,32 @@ async function loadTargetProgress(p){
 
 async function loadOff(){
   const {data:o}=await sb.from('official_measurements').select('*').eq('user_id',UP.id).single();
-  if(!o||!o.start_locked)return;
-  if(o.weight_start){document.getElementById('h-w').textContent=o.weight_end||o.weight_start;if(o.weight_end)document.getElementById('h-wc').textContent='▼ '+(o.weight_start-o.weight_end).toFixed(1)+'kg';}
-  if(o.bodyfat_start){document.getElementById('h-f').textContent=(o.bodyfat_end||o.bodyfat_start)+'%';if(o.bodyfat_end)document.getElementById('h-fc').textContent='▼ '+(o.bodyfat_start-o.bodyfat_end).toFixed(1)+'%';}
-  if(o.waist_start){document.getElementById('h-wt').textContent=o.waist_end||o.waist_start;if(o.waist_end)document.getElementById('h-wtc').textContent='▼ '+(o.waist_start-o.waist_end).toFixed(1)+'cm';}
+  if(!o || !o.start_locked) return;
+
+  // 1. 更新首頁頂部的大數字 (顯示最新量測或結賽數值)
+  if(o.weight_start){
+    document.getElementById('h-w').textContent = o.weight_end || LATEST_W; 
+    if(o.weight_end) document.getElementById('h-wc').textContent = '▼ ' + (o.weight_start - o.weight_end).toFixed(1) + 'kg';
+  }
+  if(o.bodyfat_start){
+    document.getElementById('h-f').textContent = (o.bodyfat_end || o.bodyfat_start) + '%';
+    if(o.bodyfat_end) document.getElementById('h-fc').textContent = '▼ ' + (o.bodyfat_start - o.bodyfat_end).toFixed(1) + '%';
+  }
+  if(o.waist_start){
+    document.getElementById('h-wt').textContent = o.waist_end || o.waist_start;
+    if(o.waist_end) document.getElementById('h-wtc').textContent = '▼ ' + (o.waist_start - o.waist_end).toFixed(1) + 'cm';
+  }
+
+  // 2. ✅ 新增：填入首頁綠色區塊底部的「初始數據列」
+  const row = document.getElementById('initial-data-row');
+  if(row) {
+    row.style.display = 'block';
+    document.getElementById('start-w').textContent = o.weight_start || '--';
+    document.getElementById('start-f').textContent = o.bodyfat_start || '--';
+    document.getElementById('start-wt').textContent = o.waist_start || '--';
+  }
+
+  // 3. 更新量測頁面的官方數據視圖
   let html='';
   [{l:'體重',s:o.weight_start,e:o.weight_end,u:'kg'},{l:'體脂率',s:o.bodyfat_start,e:o.bodyfat_end,u:'%'},{l:'腰圍',s:o.waist_start,e:o.waist_end,u:'cm'}].forEach(r=>{
     if(!r.s)return;const d=r.e?+(r.s-r.e).toFixed(1):null;
@@ -932,7 +960,6 @@ async function loadOff(){
   });
   const od=document.getElementById('off-data-m');if(od)od.innerHTML=html||'<div style="font-size:12px;color:rgba(255,255,255,.4);text-align:center;padding:8px 0;">尚無官方量測數據</div>';
 }
-
 async function loadToday(){
   const td=new Date().toISOString().split('T')[0];
   const {data:l}=await sb.from('daily_logs').select('*').eq('user_id',UP.id).eq('log_date',td).single();
@@ -942,6 +969,11 @@ async function loadToday(){
   if(l.mood)MOOD=l.mood;
   if(l.note){const n=document.getElementById('dn');if(n)n.value=l.note;}
   if(l.exercise_type)ET=l.exercise_type;
+  // 把資料庫的運動時間補回輸入框，首頁就能正確讀取了！
+  if(l.exercise_minutes) {
+    document.getElementById('ex-min').value = l.exercise_minutes;
+    calcExCal(); // 順便把消耗的大卡也算出來顯示
+  }
   updGoals();updWaterBar();
 }
 
@@ -1243,7 +1275,7 @@ function updGoals(){
   const ex=parseInt(document.getElementById('ex-min')?.value)||0;
   setR('rp1','rp1t',pro,PRO_GOAL,'gv1',pro.toFixed(1)+'g');
   setR('rp2','rp2t',WM,WATER_GOAL,'gv2',WM+'ml');
-  setR('rp3','rp3t',cal,CAL_LIMIT,'gv3',Math.round(cal)+'');
+  setR('rp3','rp3t',cal,CAL_LIMIT,'gv3',Math.round(cal)+'大卡');
   setR('rp4','rp4t',ex,30,'gv4',ex+'分');
   const allDone=pro>=PRO_GOAL&&WM>=WATER_GOAL&&cal<=CAL_LIMIT&&ex>=30;
   const eb=document.getElementById('encourage-text');
@@ -1394,10 +1426,26 @@ async function admSaveSet(){
   if(error){toast('失敗');return;}toast('✓ 設定已儲存！');
 }
 async function admSendAnnounce(){
-  if(!RCO)return;
+  if(!RCO){
+    toast('⚠️ 發布失敗：目前資料庫中沒有「進行中的比賽」');
+    return;
+  }
   const txt=document.getElementById('adm-ann')?.value.trim();
   const {error}=await sb.from('contests').update({note:txt||null}).eq('id',RCO.id);
-  if(error){toast('失敗');return;}toast(txt?'✓ 公告已發布！':'✓ 公告已清除！');
+  if(error){
+    toast('❌ 儲存失敗，請檢查權限設定');
+    return;
+  }
+  
+  toast(txt ? '✓ 公告已發布！' : '✓ 公告已清除！');
+  
+  // ✅ 同步更新首頁畫面，切換過去馬上就能看到，不用重新整理！
+  const ab = document.getElementById('announce-bar');
+  const at = document.getElementById('announce-text');
+  if(ab && at) {
+    at.textContent = txt || '';
+    ab.style.display = txt ? 'flex' : 'none';
+  }
 }
 function aMG(uid,name){
   const sel=RG.map(g=>`<option value="${g.id}">${g.emoji||''} ${g.name}</option>`).join('');
