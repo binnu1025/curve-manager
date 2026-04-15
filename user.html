@@ -811,6 +811,7 @@ async function loadApp(){
   const te=document.getElementById('pf-tags');te.innerHTML='';
   if(p.contest_type==='individual'||p.contest_type==='both')te.innerHTML+='<span class="ptag pti">個人組</span>';
   if(p.contest_type==='team'||p.contest_type==='both')te.innerHTML+='<span class="ptag ptt">團體組</span>';
+  if(p.is_leader) te.innerHTML+='<span class="ptag" style="background:rgba(245,158,11,.3);color:#92400e;">👑 小組長</span>';
   if(p.group_id){const {data:g}=await sb.from('groups').select('name,emoji').eq('id',p.group_id).single();if(g)document.getElementById('pf-tm').textContent=g.emoji+' '+g.name;}
   const {data:co}=await sb.from('contests').select('*').eq('is_active',true).single();
   if(co){
@@ -1397,11 +1398,18 @@ async function aUS(uid,status){
   if(status==='approved'){const {data:ex}=await sb.from('official_measurements').select('id').eq('user_id',uid).single();if(!ex)await sb.from('official_measurements').insert({user_id:uid,contest_id:RCO?.id});}
   await aLU();
 }
-async function aLG(){
-  const {data}=await sb.from('groups').select('*').order('created_at');RG=data||[];
-  const el=document.getElementById('adm-gl');if(!el)return;
-  if(!RG.length){el.innerHTML='<div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">尚無組別</div>';return;}
-  el.innerHTML=RG.map(g=>{const mb=RU.filter(u=>u.group_id===g.id&&u.status==='approved');return`<div class="adm-c"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><div style="font-size:13px;font-weight:700;color:#0d2b1a;">${g.emoji||''} ${g.name}</div><span style="font-size:10px;color:#5a7a63;background:#f2f8f5;padding:2px 8px;border-radius:10px;">${mb.length}人</span></div>${mb.map(m=>`<div style="font-size:12px;color:#0d2b1a;padding:2px 0;">• ${m.name}</div>`).join('')}${!mb.length?'<div style="font-size:11px;color:#bbb;">尚無成員</div>':''}<button class="adm-bo" onclick="aAM('${g.id}','${g.name}')">＋ 新增成員</button></div>`;}).join('');
+async function aToggleLeader(uid, isLeader, name){
+  // 更新資料庫中的 is_leader 狀態
+  const {error}=await sb.from('users').update({is_leader: isLeader}).eq('id', uid);
+  if(error){
+    toast('❌ 設定失敗，請檢查 Supabase 是否有加上 is_leader 欄位');
+    return;
+  }
+  toast(isLeader ? `👑 已將 ${name} 設為組長！` : `✓ 已取消 ${name} 的組長身分`);
+  
+  // 重新載入畫面資料，讓皇冠圖示馬上生效
+  await aLU(); 
+  await aLG();
 }
 async function aLO(){
   const appr=RU.filter(u=>u.status==='approved');const {data:oms}=await sb.from('official_measurements').select('*');
