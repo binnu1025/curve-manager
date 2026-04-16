@@ -781,8 +781,15 @@ function rn1(){
   RD.name=name;RD.phone=document.getElementById('rph')?.value;RD.age=parseInt(a);RD.height=parseFloat(h);rrs(2);
 }
 function rn2(){
-  RD.weight=parseFloat(document.getElementById('rw')?.value||0);RD.fat=parseFloat(document.getElementById('rf')?.value||0);
-  RD.waist=parseFloat(document.getElementById('rwt')?.value||0);RD.hip=parseFloat(document.getElementById('rhip')?.value||0);rrs(3);
+  // 建立一個小工具函數：如果有值就轉換成數字，沒填就回傳 null
+  const getVal = id => document.getElementById(id)?.value ? parseFloat(document.getElementById(id).value) : null;
+  
+  RD.weight = getVal('rw');
+  RD.fat = getVal('rf');
+  RD.waist = getVal('rwt');
+  RD.hip = getVal('rhip');
+  
+  rrs(3);
 }
 async function subReg(){
   if(!RD.ti&&!RD.tt){toast('請選擇至少一種參賽方式');return;}
@@ -1035,8 +1042,10 @@ function updTip(){
   if(!tipEl||!tipText)return;
   if(pro>=PRO_GOAL&&cal<=CAL_LIMIT){
     tipEl.style.display='flex';tipText.textContent='🎉 今天蛋白質和熱量都達標了，太棒了！繼續保持！';
-  } else if(proLeft>0){
-    tipEl.style.display='flex';tipText.textContent=`今天蛋白質還差 ${proLeft.toFixed(1)}g，再補一份蛋白素就達標囉！`;
+ } else if(proLeft>0){
+    const scoops = Math.ceil(proLeft / 8); // 計算大約需要幾匙/份
+    tipEl.style.display='flex';
+    tipText.textContent=`今天蛋白質還差 ${proLeft.toFixed(1)}g，建議再補充 ${scoops} 份蛋白素就達標囉！`;
   } else if(cal>CAL_LIMIT){
     tipEl.style.display='flex';tipText.textContent=`⚠️ 今天熱量快到上限囉，晚餐輕食一下！`;
   } else {tipEl.style.display='none';}
@@ -1282,7 +1291,12 @@ function updGoals(){
   const eb=document.getElementById('encourage-text');
   if(eb){
     if(allDone)eb.textContent='🎉 今天所有目標都達標了，太棒了！繼續保持！';
-    else if(pro<PRO_GOAL)eb.textContent=`💪 今天蛋白質還差 ${(PRO_GOAL-pro).toFixed(1)}g，再補一份蛋白素就達標囉！`;
+    if(allDone)eb.textContent='🎉 今天所有目標都達標了，太棒了！繼續保持！';
+    else if(pro<PRO_GOAL){
+      const diff = PRO_GOAL - pro;
+      const scoops = Math.ceil(diff / 8);
+      eb.textContent=`💪 今天蛋白質還差 ${diff.toFixed(1)}g，建議再補充 ${scoops} 份蛋白素就達標囉！`;
+    }
     else if(WM<WATER_GOAL)eb.textContent=`💧 今天還差 ${WATER_GOAL-WM}ml 才達標，多喝一杯水加油！`;
     else if(ex<30)eb.textContent=`🏃 今天還沒運動喔，動一動身體會謝謝你！`;
   }
@@ -1384,15 +1398,22 @@ async function aLU(){
   if(al){al.innerHTML=!appr.length?'<div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">尚無已通過學員</div>':
     appr.map(u=>{
       const isActive=activeIds.has(u.id);
+      // 新增：根據是否為組長，產生不同的按鈕和名字前面的皇冠
+      const leaderBtn = u.is_leader 
+        ? `<button class="adm-bo" style="width:auto;padding:6px 10px;margin-top:0;border-color:#fca5a5;color:#ef4444;" onclick="aToggleLeader('${u.id}', false, '${u.name}')">取消組長</button>`
+        : `<button class="adm-bo" style="width:auto;padding:6px 10px;margin-top:0;border-color:#fde047;color:#ca8a04;" onclick="aToggleLeader('${u.id}', true, '${u.name}')">設為組長</button>`;
+
       return`<div class="adm-c" style="display:flex;align-items:center;gap:10px;">
         <div style="flex:1;min-width:0;">
-          <div class="adm-nm"><span class="active-dot ${isActive?'dot-green':'dot-red'}"></span>${u.name}</div>
+          <div class="adm-nm"><span class="active-dot ${isActive?'dot-green':'dot-red'}"></span>${u.is_leader?'👑 ':''}${u.name}</div>
           <div class="adm-em">${u.email||''}</div>
           <div style="font-size:10px;color:#5a7a63;margin-top:2px;">${u.groups?u.groups.emoji+' '+u.groups.name:'未分組'} · ${isActive?'活躍':'3天未記錄 ⚠️'}</div>
         </div>
-        <button class="adm-bo" style="width:auto;padding:8px 12px;margin-top:0;" onclick="aMG('${u.id}','${u.name}')">調整</button>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          ${leaderBtn}
+          <button class="adm-bo" style="width:auto;padding:6px 10px;margin-top:0;" onclick="aMG('${u.id}','${u.name}')">換組別</button>
+        </div>
       </div>`;}).join('');}
-}
 async function aUS(uid,status){
   await sb.from('users').update({status}).eq('id',uid);toast(status==='approved'?'✓ 已通過':'✕ 已拒絕');
   if(status==='approved'){const {data:ex}=await sb.from('official_measurements').select('id').eq('user_id',uid).single();if(!ex)await sb.from('official_measurements').insert({user_id:uid,contest_id:RCO?.id});}
@@ -1488,7 +1509,48 @@ async function aCNG(){
   if(parts.length>1&&/\p{Emoji}/u.test(parts[0])){emoji=parts[0];name=parts.slice(1).join(' ');}
   await sb.from('groups').insert({name,emoji,contest_id:RCO?.id});closeMo();toast('✓ 組別已新增');await aLG();
 }
+async function aLG() {
+  // 1. 取得所有組別
+  const { data: groups } = await sb.from('groups').select('*').order('created_at', { ascending: true });
+  RG = groups || []; // 更新全域變數，換組別時的選單會用到
 
+  const gl = document.getElementById('adm-gl');
+  if (!gl) return;
+
+  if (!RG.length) {
+    gl.innerHTML = '<div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">目前尚無組別，請先新增</div>';
+    return;
+  }
+
+  // 2. 渲染組別卡片與成員狀況
+  gl.innerHTML = RG.map(g => {
+    // 找出這個組別的所有成員 (RU 是上方 aLU 抓好的全域學員資料)
+    const members = RU.filter(u => u.group_id === g.id && u.status === 'approved');
+    
+    // 產生組員列表 HTML
+    const membersHtml = members.length === 0
+      ? '<div style="font-size:11px;color:#bbb;padding:4px 0;text-align:center;">尚無成員</div>'
+      : members.map(u => `
+          <div style="display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px solid #f0f5f2;">
+            <span style="color:#0d2b1a; font-weight:500;">${u.is_leader ? '👑' : '👤'} ${u.name}</span>
+            <span style="color:#5a7a63; font-size:11px;">${u.contest_type === 'team' ? '團體組' : '雙棲'}</span>
+          </div>
+        `).join('');
+
+    return `
+    <div class="adm-c" style="margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid #e0ebe5; padding-bottom:8px; margin-bottom:8px;">
+        <div style="font-size:15px; font-weight:900; color:#0d2b1a;">${g.emoji || '👥'} ${g.name}</div>
+        <div style="font-size:11px; font-weight:700; color:#5a7a63; background:#e8f0ec; padding:3px 8px; border-radius:10px;">共 ${members.length} 人</div>
+      </div>
+      <div style="margin-bottom:12px; padding:0 4px;">
+        ${membersHtml}
+      </div>
+      <button class="adm-bo" style="margin-top:0; border-style:dashed;" onclick="aAM('${g.id}', '${g.name}')">＋ 挑選學員加入此組</button>
+    </div>
+    `;
+  }).join('');
+}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
 init();
 </script>
