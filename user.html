@@ -78,8 +78,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
 .tb-lbl{font-size:11px;color:#5a7a63;}
 .tb-val{font-size:12px;font-weight:700;color:#0d2b1a;}
 .tb-progress{height:5px;background:#e8f0ec;border-radius:3px;overflow:hidden;margin-bottom:8px;}
-/* 優化 1：進度條改用 GPU 加速 (transform: scaleX) */
-.tb-fill{height:100%;width:100%;transform:scaleX(0);transform-origin:left center;border-radius:3px;background:linear-gradient(90deg,#3ecf8e,#1a9e6a);transition:transform .5s ease-out;}
+.tb-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#3ecf8e,#1a9e6a);transition:width .5s;}
 .tb-deficit{font-size:11px;color:#5a7a63;text-align:center;padding-top:6px;border-top:1px solid #f0f5f2;}
 
 /* INPUT */
@@ -101,7 +100,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
 .mb-kc{font-size:11px;color:#5a7a63;margin-top:2px;}
 /* 放大新增按鈕 */
 .mb-add{width:38px;height:38px;border-radius:50%;border:1.5px solid #c8e0d0;background:#fff;color:#1a4a2e;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;}
-.mb-add:active{background:#e8f0ec;transform:scale(0.95);}
+.mb-add:active{background:#e8f0ec;}
 .mi-list{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
 /* 改良食物項目，變成整條可點擊 */
 .mi{background:#fff;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .2s;position:relative;box-shadow:0 1px 2px rgba(0,0,0,0.02);}
@@ -119,11 +118,9 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
 .wbs{margin-left:auto;display:flex;gap:8px;}
 /* 放大喝水按鈕 */
 .wb{padding:12px 16px;border-radius:12px;border:1.5px solid #e0ebe5;background:#f2f8f5;font-size:14px;font-weight:700;color:#0d2b1a;cursor:pointer;font-family:inherit;}
-.wb:active{transform:scale(0.96);}
 .w-target{font-size:12px;color:#5a7a63;margin-top:8px;}
 .w-bar{height:8px;background:#e8f0ec;border-radius:4px;overflow:hidden;margin-top:8px;}
-/* 優化 1：喝水進度條 GPU 加速 */
-.w-fill{height:100%;width:100%;transform:scaleX(0);transform-origin:left center;border-radius:4px;background:#3b82f6;transition:transform .4s ease-out;}
+.w-fill{height:100%;border-radius:4px;background:#3b82f6;transition:width .4s;}
 
 .ex-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 /* 放大運動項目 */
@@ -133,7 +130,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
 .ex-item.on{border-color:#3ecf8e;background:#d4f0e2;color:#0d2b1a;}
 .ex-dur{display:flex;align-items:center;gap:10px;margin-top:14px;}
 .ex-dur label{font-size:13px;color:#5a7a63;font-weight:500;white-space:nowrap;}
-/* 優化 2：iOS 防縮放，font-size 提至 16px */
 .ex-dur input{flex:1;padding:12px 14px;border:1.5px solid #e0ebe5;border-radius:12px;font-size:16px;font-family:inherit;color:#0d2b1a;background:#f2f8f5;}
 
 .ex-result{background:#f2f8f5;border-radius:12px;padding:14px 16px;margin-top:12px;text-align:center;}
@@ -145,8 +141,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
 .mood-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;border-radius:14px;border:1.5px solid #e0ebe5;background:#f2f8f5;cursor:pointer;font-size:12px;color:#5a7a63;font-weight:500;flex:1;}
 .mood-btn .mi2{font-size:26px;}
 .mood-btn.on{border-color:#3ecf8e;background:#d4f0e2;color:#0d2b1a;}
-/* 優化 2：防 iOS 縮放 */
-.note-ta{width:100%;padding:12px 14px;border:1.5px solid #e0ebe5;border-radius:12px;font-size:16px;font-family:inherit;resize:none;height:80px;color:#0d2b1a;margin-top:12px;background:#f2f8f5;}
+.note-ta{width:100%;padding:12px 14px;border:1.5px solid #e0ebe5;border-radius:12px;font-size:14px;font-family:inherit;resize:none;height:80px;color:#0d2b1a;margin-top:12px;background:#f2f8f5;}
 
 .confirm-btn{width:100%;padding:16px;background:#3ecf8e;color:#0d2b1a;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:14px;}
 .confirm-btn.saved{background:#d4f0e2;color:#1a9e6a;}
@@ -256,14 +251,13 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
 .adm-br{flex:1;padding:10px;background:#fff;color:#ef4444;border:1.5px solid #fca5a5;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
 .adm-bo{width:100%;padding:10px;background:#f2f8f5;color:#0d2b1a;border:1.5px solid #c8e0d0;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;}
 .adm-pr{width:100%;padding:14px;background:#3ecf8e;color:#0d2b1a;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px;}
-/* 優化 2：防 iOS 縮放 */
-.adm-in{width:100%;padding:12px 14px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:16px;font-family:inherit;color:#0d2b1a;background:#f2f8f5;margin-bottom:8px;}
+.adm-in{width:100%;padding:12px 14px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:15px;font-family:inherit;color:#0d2b1a;background:#f2f8f5;margin-bottom:8px;}
 .adm-in:focus{outline:none;border-color:#3ecf8e;background:#fff;}
-.adm-ta{width:100%;padding:12px 14px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:16px;font-family:inherit;color:#0d2b1a;background:#f2f8f5;resize:none;height:72px;margin-bottom:8px;}
+.adm-ta{width:100%;padding:12px 14px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:14px;font-family:inherit;color:#0d2b1a;background:#f2f8f5;resize:none;height:72px;margin-bottom:8px;}
 .adm-ta:focus{outline:none;border-color:#3ecf8e;background:#fff;}
 .adm-2c{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
 .adm-fl label{font-size:12px;font-weight:700;color:#5a7a63;display:block;margin-bottom:6px;}
-.adm-fl input{width:100%;padding:10px;border:1.5px solid #e0ebe5;border-radius:9px;font-size:16px;font-family:inherit;color:#0d2b1a;background:#f2f8f5;}
+.adm-fl input{width:100%;padding:10px;border:1.5px solid #e0ebe5;border-radius:9px;font-size:14px;font-family:inherit;color:#0d2b1a;background:#f2f8f5;}
 .adm-fl input:focus{outline:none;border-color:#3ecf8e;background:#fff;}
 .active-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;}
 .dot-green{background:#3ecf8e;}
@@ -278,12 +272,11 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
 .rb{background:#f2f8f5;border-radius:16px;padding:16px;width:100%;}
 .fg{margin-bottom:12px;}
 .fg label{font-size:12px;font-weight:700;color:#5a7a63;display:block;margin-bottom:6px;}
-/* 優化 2：防 iOS 縮放 */
-.fi{width:100%;padding:12px 14px;border:1.5px solid #e0ebe5;border-radius:11px;font-size:16px;font-family:inherit;color:#0d2b1a;background:#fff;}
+.fi{width:100%;padding:12px 14px;border:1.5px solid #e0ebe5;border-radius:11px;font-size:15px;font-family:inherit;color:#0d2b1a;background:#fff;}
 .fi:focus{outline:none;border-color:#3ecf8e;}
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .gr-row{display:flex;gap:8px;}
-.gb{flex:1;padding:12px;border-radius:11px;border:1.5px solid #e0ebe5;background:#fff;font-size:16px;font-weight:700;color:#5a7a63;cursor:pointer;text-align:center;font-family:inherit;}
+.gb{flex:1;padding:12px;border-radius:11px;border:1.5px solid #e0ebe5;background:#fff;font-size:14px;font-weight:700;color:#5a7a63;cursor:pointer;text-align:center;font-family:inherit;}
 .gb.on{border-color:#3ecf8e;background:#d4f0e2;color:#0d2b1a;}
 .type-btn{padding:14px 16px;border-radius:12px;border:1.5px solid #e0ebe5;background:#fff;display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:8px;width:100%;}
 .type-btn.on{border-color:#3ecf8e;background:#d4f0e2;}
@@ -337,8 +330,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
 .mp-ck.on{background:#3ecf8e;border-color:#3ecf8e;color:#fff;}
 .cpanel{padding:16px;flex:1;overflow-y:auto;}
 .cpanel label{font-size:13px;font-weight:700;color:#5a7a63;display:block;margin-bottom:6px;}
-/* 優化 2：防 iOS 縮放 */
-.ci{width:100%;padding:12px 14px;border:1.5px solid #e0ebe5;border-radius:12px;font-size:16px;background:#f2f8f5;color:#0d2b1a;font-family:inherit;margin-bottom:14px;}
+.ci{width:100%;padding:12px 14px;border:1.5px solid #e0ebe5;border-radius:12px;font-size:15px;background:#f2f8f5;color:#0d2b1a;font-family:inherit;margin-bottom:14px;}
 .ci:focus{outline:none;border-color:#3ecf8e;background:#fff;}
 .c2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
 .c2 .ci{margin-bottom:0;}
@@ -458,7 +450,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
           <div style="font-size:14px;font-weight:700;color:#0d2b1a;margin-bottom:16px;">今日喝水</div>
           <div class="wr"><div class="wn" id="wn">0</div><div class="wu">ml</div><div class="wbs"><button class="wb" onclick="addWater(-250)">－250</button><button class="wb" onclick="addWater(250)">＋250</button></div></div>
           <div class="w-target" id="w-target">目標：— ml</div>
-          <div class="w-bar"><div class="w-fill" id="w-fill" style="transform:scaleX(0);"></div></div>
+          <div class="w-bar"><div class="w-fill" id="w-fill" style="width:0%"></div></div>
           <div style="display:flex;gap:10px;margin-top:14px;">
             <button class="wb" style="flex:1;" onclick="addWater(500)">＋500ml</button>
             <button class="wb" style="flex:1; color:#ef4444; border-color:#fca5a5;" onclick="setWater(0)">重置</button>
@@ -479,7 +471,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
             <div class="ex-item" onclick="selEx(this,'游泳',6.0)"><span class="ei">🏊</span>游泳<span class="ec">360大卡/小時</span></div>
             <div class="ex-item" onclick="selEx(this,'爬山',7.5)"><span class="ei">⛰️</span>爬山<span class="ec">450大卡/小時</span></div>
           </div>
-                    <div class="ex-dur"><label>運動時間</label><input type="number" id="ex-min" placeholder="30" min="0" oninput="debouncedCalcExCal()"><span style="font-size:14px;color:#5a7a63;">分鐘</span></div>
+          <div class="ex-dur"><label>運動時間</label><input type="number" id="ex-min" placeholder="30" min="0" oninput="calcExCal()"><span style="font-size:14px;color:#5a7a63;">分鐘</span></div>
           <div class="ex-result" id="ex-result" style="display:none;">
             <div class="ex-result-val" id="ex-cal">0 大卡</div>
             <div class="ex-result-lbl">預估消耗熱量</div>
@@ -649,7 +641,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
       <label style="font-size:13px; font-weight:700; color:#5a7a63; display:block; margin-bottom:12px; text-align:center;">調整份數 / 比例</label>
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; justify-content:center;">
          <button class="wb" onclick="adjQty(-0.5)" style="width:52px; height:52px; padding:0; display:flex; align-items:center; justify-content:center; font-size:24px; border-radius:14px;">－</button>
-                  <input type="number" id="em-qty" step="0.1" style="width:90px; height:52px; text-align:center; font-size:20px; font-weight:700; color:#0d2b1a; border:1.5px solid #e0ebe5; border-radius:14px; background:#fff;" oninput="debouncedUpdPreview()">
+         <input type="number" id="em-qty" step="0.1" style="width:90px; height:52px; text-align:center; font-size:20px; font-weight:700; color:#0d2b1a; border:1.5px solid #e0ebe5; border-radius:14px; background:#fff;" oninput="updPreview()">
          <button class="wb" onclick="adjQty(0.5)" style="width:52px; height:52px; padding:0; display:flex; align-items:center; justify-content:center; font-size:24px; border-radius:14px;">＋</button>
       </div>
       <div id="em-preview" style="font-size:14px; font-weight:500; color:#3ecf8e; margin-bottom:24px; text-align:center; background:#0d2b1a; padding:12px; border-radius:14px;"></div>
@@ -664,11 +656,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
 <div class="toast" id="toast"></div>
 
 <script>
-/* 優化 4：加入 Haptic Feedback 觸覺微震動回饋 */
-function vibrate() {
-  if (navigator.vibrate) navigator.vibrate(40);
-}
-
 const SB_URL='https://prkgdwhwxdrmldgakzjq.supabase.co';
 const SB_KEY='sb_publishable_d5pjEDl-T2mE_B86Aj5F8Q_pNzpUNcT';
 const ADMIN='binnu1025@gmail.com';
@@ -714,9 +701,6 @@ let CU=null,UP=null,ML=[[],[],[],[]],WM=0,CM=0,SP=null,SS=1,MC='全部',MT_='nut
 let LATEST_W=60,PRO_GOAL=72,WATER_GOAL=1800,CAL_LIMIT=1664;
 let savedSections={food:false,water:false,ex:false,sleep:false,mood:false};
 const MN = ['早餐', '午餐', '晚餐', '點心'];
-
-/* 優化 5：紀錄快取機制 */
-let isDiaryLoaded = false;
 
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
@@ -802,7 +786,6 @@ function rn2(){
 }
 async function subReg(){
   if(!RD.ti&&!RD.tt){toast('請選擇至少一種參賽方式');return;}
-  vibrate(); // 震動回饋
   const type=RD.ti&&RD.tt?'both':RD.ti?'individual':'team';
   const tWeight=parseFloat(document.getElementById('r-tw')?.value)||null;
   const tFat=parseFloat(document.getElementById('r-tf')?.value)||null;
@@ -931,7 +914,6 @@ async function loadTargetProgress(p){
     rows.push({l:'腰圍',from:om.waist_start,now:latestM.waist,diff,unit:'cm',color:'#f59e0b',pct});
   }
   if(!rows.length)return;
-  /* 優化 1：目標進度條改為 scaleX */
   tpContent.innerHTML=rows.map(r=>`
     <div style="margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -939,7 +921,7 @@ async function loadTargetProgress(p){
         <span style="font-size:11px;color:#5a7a63;">${r.from}${r.unit} → <strong style="color:#0d2b1a;">${r.now}${r.unit}</strong> ${r.diff>0?`<span style="color:#3ecf8e;font-weight:700;">▼${r.diff}${r.unit}</span>`:`<span style="color:#ef4444;font-weight:700;">▲${Math.abs(r.diff)}${r.unit}</span>`}</span>
       </div>
       <div style="height:6px;background:#e8f0ec;border-radius:3px;overflow:hidden;">
-        <div style="height:100%;width:100%;transform:scaleX(${r.pct/100});transform-origin:left center;background:${r.color};border-radius:3px;transition:transform .5s ease-out;"></div>
+        <div style="height:100%;width:${r.pct}%;background:${r.color};border-radius:3px;transition:width .5s;"></div>
       </div>
     </div>`).join('');
 }
@@ -1062,28 +1044,17 @@ function updTip(){
 
 function updWaterBar(){
   const pct=Math.min(100,Math.round(WM/WATER_GOAL*100));
-  const fill=document.getElementById('w-fill');
-  /* 優化 1：進度條改為 GPU 加速 scaleX */
-  if(fill)fill.style.transform='scaleX('+(pct/100)+')';
+  const fill=document.getElementById('w-fill');if(fill)fill.style.width=pct+'%';
 }
 
-function addWater(ml){vibrate();WM=Math.max(0,WM+ml);document.getElementById('wn').textContent=WM;updGoals();updWaterBar();}
-function setWater(v){vibrate();WM=v;document.getElementById('wn').textContent=WM;updGoals();updWaterBar();}
+function addWater(ml){WM=Math.max(0,WM+ml);document.getElementById('wn').textContent=WM;updGoals();updWaterBar();}
+function setWater(v){WM=v;document.getElementById('wn').textContent=WM;updGoals();updWaterBar();}
 
 function selEx(el,type,met){
-  vibrate();
   ET=type;ET_MET=met;
   document.querySelectorAll('.ex-item').forEach(e=>e.classList.remove('on'));el.classList.add('on');
   calcExCal();
 }
-
-/* 優化 3：加入防抖動計時器 (Debounce) */
-let exCalcTimer;
-function debouncedCalcExCal() {
-  clearTimeout(exCalcTimer);
-  exCalcTimer = setTimeout(() => { calcExCal(); }, 300);
-}
-
 function calcExCal(){
   const min=parseInt(document.getElementById('ex-min')?.value)||0;
   const cal=ET_MET?Math.round(ET_MET*LATEST_W*(min/60)):0;
@@ -1096,7 +1067,7 @@ function calcExCal(){
   updGoals();
 }
 
-function selMood(el,v){vibrate();MOOD=v;document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
+function selMood(el,v){MOOD=v;document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');}
 
 // ---------------- 食物紀錄與編輯功能 ----------------
 
@@ -1147,19 +1118,11 @@ function openEditItem(m, i) {
 }
 
 function adjQty(d) {
-  vibrate();
   let i = document.getElementById('em-qty');
   let v = parseFloat(i.value) || 1;
   v = Math.max(0.1, v + d);
   i.value = parseFloat(v.toFixed(2));
   updPreview();
-}
-
-/* 優化 3：防抖動 debouncedUpdPreview */
-let emQtyTimer;
-function debouncedUpdPreview() {
-  clearTimeout(emQtyTimer);
-  emQtyTimer = setTimeout(() => { updPreview(); }, 300);
 }
 
 function updPreview() {
@@ -1170,7 +1133,6 @@ function updPreview() {
 }
 
 function saveEditItem() {
-  vibrate();
   let q = parseFloat(document.getElementById('em-qty').value) || 1;
   let item = ML[EM_M][EM_I];
   
@@ -1186,7 +1148,6 @@ function saveEditItem() {
 }
 
 function delEditItem() {
-  vibrate();
   rmItem(EM_M, EM_I);
   closeEditMo();
 }
@@ -1238,9 +1199,7 @@ function sSS(i){SS=i;rMI();}
 function sCF(i){SP=i+1000;rMI();}
 
 function cfNut(){
-  if(SP===null||MT_!=='nut')return;
-  vibrate();
-  const p=PRODS[SP],s=STEPS[SS];
+  if(SP===null||MT_!=='nut')return;const p=PRODS[SP],s=STEPS[SS];
   ML[CM].push({
     n:p.n, ic:p.ic, c:+(p.c*s).toFixed(1), p:+(p.p*s).toFixed(1), cr:+(p.cr*s).toFixed(1), f:+(p.f*s).toFixed(1),
     qty: s, base: {c: p.c, p: p.p, cr: p.cr, f: p.f}
@@ -1249,7 +1208,6 @@ function cfNut(){
 }
 function cfCF(){
   if(SP===null||MT_!=='common')return;
-  vibrate();
   const f=COMMON_FOODS[SP-1000];if(!f)return;
   ML[CM].push({
     n:f.n, ic:f.ic, c:f.c, p:f.p, cr:f.cr, f:f.f,
@@ -1261,7 +1219,6 @@ function cfCustom(){
   const name=document.getElementById('cn')?.value.trim();if(!name){toast('請輸入食物名稱');return;}
   const c=+(parseFloat(document.getElementById('cc2')?.value||0)).toFixed(1);
   if(!c){toast('請填入熱量');return;}
-  vibrate();
   const p=+(parseFloat(document.getElementById('cp2')?.value||0)).toFixed(1);
   const cr=+(parseFloat(document.getElementById('ccr2')?.value||0)).toFixed(1);
   const f=+(parseFloat(document.getElementById('cf2')?.value||0)).toFixed(1);
@@ -1276,7 +1233,6 @@ function cfCustom(){
 
 async function saveSection(section){
   if(!UP)return;
-  vibrate();
   const td=new Date().toISOString().split('T')[0];
   const now=new Date();
   const timeStr=`${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
@@ -1293,7 +1249,6 @@ async function saveSection(section){
   const stEl=document.getElementById(stId);
   if(stEl){stEl.textContent=`✓ 已儲存（${timeStr}）`;stEl.style.color='#3ecf8e';stEl.style.textAlign='center';stEl.style.fontSize='12px';stEl.style.marginTop='8px';}
   toast('✓ 已儲存！');updGoals();updTip();
-  isDiaryLoaded = false; /* 優化 5：儲存後清除快取，下次切換紀錄頁才會抓新資料 */
 }
 
 async function saveMeas(){
@@ -1304,7 +1259,6 @@ async function saveMeas(){
   if(!w){toast('請填入體重');return;}
   if(!f){toast('請填入體脂率');return;}
   if(!wt){toast('請填入腰圍');return;}
-  vibrate();
   const g=id=>parseFloat(document.getElementById(id)?.value)||null;
   const td=new Date().toISOString().split('T')[0];
   const {error}=await sb.from('home_measurements').insert({user_id:UP.id,measured_date:td,weight:parseFloat(w),bodyfat:parseFloat(f),muscle:g('fm-m'),visceral:parseInt(document.getElementById('fm-v')?.value)||null,waist:parseFloat(wt)});
@@ -1349,14 +1303,11 @@ function setMT(t,el){
 
 async function loadDiary(){
   if(!UP)return;
+  const {data:logs}=await sb.from('daily_logs').select('*').eq('user_id',UP.id).order('log_date',{ascending:false}).limit(30);
   const el=document.getElementById('diary-list');
   const det=document.getElementById('diary-detail');
   if(!el)return;
   det.style.display='none';el.style.display='block';
-  /* 優化 5：SWR 快取策略，已載入就不重複發送請求 */
-  if(isDiaryLoaded) return;
-  
-  const {data:logs}=await sb.from('daily_logs').select('*').eq('user_id',UP.id).order('log_date',{ascending:false}).limit(30);
   if(!logs||!logs.length){el.innerHTML='<div style="text-align:center;padding:32px;color:#5a7a63;font-size:13px;">還沒有紀錄，開始記錄吧！</div>';return;}
   const MOODS=['','😔','😐','🙂','😄','🔥'];
   el.innerHTML=logs.map(l=>{
@@ -1378,7 +1329,6 @@ async function loadDiary(){
       </div>
     </div>`;
   }).join('');
-  isDiaryLoaded = true;
 }
 function showDiaryDetail(l){
   const el=document.getElementById('diary-list');
@@ -1407,16 +1357,8 @@ function showDiaryDetail(l){
 
 // ADMIN FUNCTIONS
 async function loadAdm(){
-  /* 先放入預設 Loading 骨架文字 */
-  document.getElementById('adm-pl').innerHTML='<div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">載入中...</div>';
-  document.getElementById('adm-al').innerHTML='<div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">載入中...</div>';
-  document.getElementById('adm-gl').innerHTML='<div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">載入中...</div>';
-  document.getElementById('adm-ol').innerHTML='<div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">載入中...</div>';
-  
-  /* 優化 6：Promise.all 併發發送請求，消除瀑布效應 */
-  await Promise.all([aLC(), aLU(), aLG(), aLO()]);
+  await aLC();await aLU();await aLG();await aLO();
 }
-
 async function aLC(){
   const {data}=await sb.from('contests').select('*').eq('is_active',true).single();RCO=data;
   if(!data)return;const f=id=>document.getElementById(id);
@@ -1444,32 +1386,13 @@ async function aLU(){
       const isActive=activeIds.has(u.id);
       return`<div class="adm-c" style="display:flex;align-items:center;gap:10px;">
         <div style="flex:1;min-width:0;">
-          <div class="adm-nm"><span class="active-dot ${isActive?'dot-green':'dot-red'}"></span>${u.is_leader ? '👑 ' : ''}${u.name}</div>
+          <div class="adm-nm"><span class="active-dot ${isActive?'dot-green':'dot-red'}"></span>${u.name}</div>
           <div class="adm-em">${u.email||''}</div>
           <div style="font-size:10px;color:#5a7a63;margin-top:2px;">${u.groups?u.groups.emoji+' '+u.groups.name:'未分組'} · ${isActive?'活躍':'3天未記錄 ⚠️'}</div>
         </div>
-        <div style="display:flex; flex-direction:column; gap:6px;">
-          <button class="adm-bo" style="width:100%;padding:6px 12px;margin-top:0;" onclick="aMG('${u.id}','${u.name}')">調組別</button>
-          <button class="adm-bo" style="width:100%;padding:6px 12px;margin-top:0; border-color:${u.is_leader ? '#f59e0b' : '#c8e0d0'}; color:${u.is_leader ? '#d97706' : '#5a7a63'}; background:${u.is_leader ? '#fffbeb' : '#f2f8f5'};" onclick="aToggleLeader('${u.id}', ${!u.is_leader}, '${u.name}')">
-            ${u.is_leader ? '取消組長' : '設為組長'}
-          </button>
-        </div>
+        <button class="adm-bo" style="width:auto;padding:8px 12px;margin-top:0;" onclick="aMG('${u.id}','${u.name}')">調整</button>
       </div>`;}).join('');}
 }
-
-/* 補上你原本缺漏的 aLG 分組管理渲染函數 */
-async function aLG(){
-  const {data} = await sb.from('groups').select('*').order('created_at', {ascending: true});
-  RG = data || [];
-  const gl = document.getElementById('adm-gl');
-  if(!gl) return;
-  if(!RG.length) {
-    gl.innerHTML = '<div style="text-align:center;padding:12px;font-size:12px;color:#5a7a63;">尚無分組</div>';
-    return;
-  }
-  gl.innerHTML = RG.map(g => `<div class="adm-c" style="display:flex;justify-content:space-between;align-items:center;"><div class="adm-nm">${g.emoji||''} ${g.name}</div><button class="adm-bo" style="width:auto;padding:6px 12px;margin:0;" onclick="aAM('${g.id}','${g.name}')">＋ 加人</button></div>`).join('');
-}
-
 async function aUS(uid,status){
   await sb.from('users').update({status}).eq('id',uid);toast(status==='approved'?'✓ 已通過':'✕ 已拒絕');
   if(status==='approved'){const {data:ex}=await sb.from('official_measurements').select('id').eq('user_id',uid).single();if(!ex)await sb.from('official_measurements').insert({user_id:uid,contest_id:RCO?.id});}
