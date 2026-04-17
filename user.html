@@ -1554,6 +1554,85 @@ async function aLG() {
 }
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
 init();
+  // --- 🍱 常用餐食組合功能開始 ---
+
+// 1. 儲存組合：把目前輸入框的內容存到資料庫
+async function saveMealCombo() {
+    const mealInput = document.querySelector('textarea'); 
+    const content = mealInput?.value.trim(); 
+    if (!content) { toast('請先在輸入框寫點東西再儲存喔！'); return; }
+
+    const comboName = prompt("請為這個餐食組合命名（例：超商無腦餐）：");
+    if (!comboName) return;
+
+    const { error } = await sb.from('user_meal_combos').insert({ 
+        user_id: CU.id, 
+        combo_name: comboName, 
+        content: content 
+    });
+
+    if (error) { toast('儲存失敗，請確認有跑 SQL 建立資料表'); return; }
+    toast('✓ 已儲存到我的最愛！');
+    await loadMyCombos(); 
+}
+
+// 2. 載入組合：從資料庫抓取該使用者的所有組合
+async function loadMyCombos() {
+    const sel = document.getElementById('combo-select');
+    if(!sel) return;
+
+    const { data, error } = await sb.from('user_meal_combos')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error || !data || data.length === 0) {
+        sel.innerHTML = '<option value="">(尚未儲存組合)</option>';
+        return;
+    }
+
+    let html = '<option value="">✨ 選擇我的常用組合...</option>';
+    data.forEach(c => { html += `<option value="${c.content}">${c.combo_name}</option>`; });
+    sel.innerHTML = html;
+}
+
+// 3. 套用組合：選了選單後，自動把字填進輸入框
+function applyCombo() {
+    const sel = document.getElementById('combo-select');
+    const mealInput = document.querySelector('textarea'); 
+    if(sel.value && mealInput) {
+        mealInput.value = sel.value; 
+        toast('✓ 已帶入內容！');
+        sel.value = ""; 
+    }
+}
+
+// 4. 自動外掛：在網頁畫面上自動插進下拉選單
+function injectMealHelper() {
+    const labels = Array.from(document.querySelectorAll('label'));
+    const targetLabel = labels.find(el => el.textContent.includes('今日餐食'));
+
+    if (!targetLabel || document.getElementById('combo-select')) return;
+
+    const div = document.createElement('div');
+    div.innerHTML = `
+        <div style="background:#f0f7f3; padding:10px; border-radius:10px; margin:8px 0; border:1px solid #e0ebe5;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-size:12px; font-weight:700; color:#5a7a63;">✨ 快速帶入</span>
+                <button type="button" onclick="saveMealCombo()" style="background:#0d2b1a; color:#fff; border:none; border-radius:6px; padding:4px 8px; font-size:11px; cursor:pointer;">存為我的最愛</button>
+            </div>
+            <select id="combo-select" onchange="applyCombo()" style="width:100%; padding:8px; border:1.5px solid #e0ebe5; border-radius:8px; font-size:13px; color:#0d2b1a; background:white;">
+                <option value="">載入中...</option>
+            </select>
+        </div>
+    `;
+    targetLabel.parentNode.insertBefore(div, targetLabel.nextSibling);
+    loadMyCombos();
+}
+
+// 5. 確保網頁讀取完後啟動
+setTimeout(injectMealHelper, 2000); 
+
+// --- 🍱 常用餐食組合功能結束 ---
 </script>
 </body>
 </html>
