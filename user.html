@@ -1414,6 +1414,7 @@ async function aLU(){
           <button class="adm-bo" style="width:auto;padding:6px 10px;margin-top:0;" onclick="aMG('${u.id}','${u.name}')">換組別</button>
         </div>
       </div>`;}).join('');}
+  } // <--- 🌟 就是漏了這個大括號！它是用來關閉 aLU() 的
 async function aUS(uid,status){
   await sb.from('users').update({status}).eq('id',uid);toast(status==='approved'?'✓ 已通過':'✕ 已拒絕');
   if(status==='approved'){const {data:ex}=await sb.from('official_measurements').select('id').eq('user_id',uid).single();if(!ex)await sb.from('official_measurements').insert({user_id:uid,contest_id:RCO?.id});}
