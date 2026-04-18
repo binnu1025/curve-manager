@@ -1411,7 +1411,10 @@ async function aLU(){
         </div>
         <div style="display:flex; flex-direction:column; gap:6px;">
           ${leaderBtn}
-          <button class="adm-bo" style="width:auto;padding:6px 10px;margin-top:0;" onclick="aMG('${u.id}','${u.name}')">換組別</button>
+         <button class="adm-bo" style="width:auto;padding:6px 10px;margin-top:0;" onclick="aMG('${u.id}','${u.name}')">換組別</button>
+<button class="adm-bo" style="width:auto;padding:6px 10px;margin-top:0;border-color:${u.is_admin?'#fca5a5':'#c8e0d0'};color:${u.is_admin?'#ef4444':'#1a4a2e'};" onclick="toggleAdmin('${u.id}',${u.is_admin})">
+  ${u.is_admin?'🔑 移除管理員':'🔑 設管理員'}
+</button>
         </div>
       </div>`;}).join('');}
   } // <--- 🌟 就是漏了這個大括號！它是用來關閉 aLU() 的
@@ -1551,6 +1554,13 @@ async function aLG() {
     </div>
     `;
   }).join('');
+}
+  async function toggleAdmin(userId, currentStatus) {
+  if(!window.confirm(currentStatus ? '確定移除管理員權限？' : '確定設為管理員？')) return;
+  const {error} = await sb.from('users').update({is_admin: !currentStatus}).eq('id', userId);
+  if(error){toast('設定失敗');return;}
+  toast(currentStatus ? '✓ 已移除管理員' : '✓ 已設為管理員');
+  await aLU();
 }
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
 init();
