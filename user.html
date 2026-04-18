@@ -644,7 +644,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
     <button class="tab" onclick="goP('measure',this)"><div class="tab-ic">📏</div><div>量測</div><div class="tab-dot"></div></button>
     <button class="tab" onclick="goP('diary',this);loadDiary()"><div class="tab-ic">📖</div><div>紀錄</div><div class="tab-dot"></div></button>
     <button class="tab" onclick="goP('profile',this)"><div class="tab-ic">👤</div><div>個人</div><div class="tab-dot"></div></button>
-    <button class="tab" id="adm-tab" style="display:none;" onclick="goP('admin',this);loadAdm()"><div class="tab-ic">⚙️</div><div>管理</div><div class="tab-dot"></div></button>
     <button class="tab" id="leader-tab" style="display:none;" onclick="goP('leader',this);loadLeaderView()"><div class="tab-ic">👥</div><div>我的組</div><div class="tab-dot"></div></button>
   </div>
 </div>
@@ -753,7 +752,6 @@ function sv(v){
     document.getElementById('main-pages').style.display='block';
     document.getElementById('main-tabs').style.display='flex';
     if(CU&&CU.email===ADMIN){
-      document.getElementById('adm-tab').style.display='flex';
       document.getElementById('menu-btn').style.display='flex';
     }
     if(UP&&UP.is_leader){
