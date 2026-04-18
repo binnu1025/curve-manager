@@ -768,6 +768,17 @@ function goP(n,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById('pg-'+n).classList.add('on');
+  // 切換頁面時清除編輯模式
+  if(n==='input'&&EDIT_DATE){
+    EDIT_DATE=null;
+    ['food-btn','water-btn','ex-btn','mood-btn'].forEach(id=>{
+      const btn=document.getElementById(id);
+      if(btn){
+        const labels={food:'💾 儲存飲食紀錄',water:'💾 儲存喝水紀錄',ex:'💾 儲存運動紀錄',mood:'💾 儲存今日狀態'};
+        btn.textContent=labels[id.replace('-btn','')];
+      }
+    });
+  }
 }
 
 function rrs(s){
