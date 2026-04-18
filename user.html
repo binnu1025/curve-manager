@@ -377,7 +377,23 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
 
   <div class="topbar" id="main-top" style="display:none;">
     <div class="tb-title">🌿 曲線管理比賽</div>
-    <div class="tb-badge" id="week-b">第 1 週</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="tb-badge" id="week-b">第 1 週</div>
+      <button id="menu-btn" onclick="toggleMenu()" style="background:rgba(255,255,255,.15);border:none;border-radius:8px;width:34px;height:34px;display:none;align-items:center;justify-content:center;cursor:pointer;flex-direction:column;gap:4px;padding:8px;">
+        <span style="display:block;width:16px;height:2px;background:#fff;border-radius:2px;"></span>
+        <span style="display:block;width:16px;height:2px;background:#fff;border-radius:2px;"></span>
+        <span style="display:block;width:16px;height:2px;background:#fff;border-radius:2px;"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 漢堡選單彈出層 -->
+  <div id="hamburger-menu" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;" onclick="if(event.target===this)closeMenu()">
+    <div style="position:absolute;top:52px;right:8px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:180px;overflow:hidden;">
+      <div style="padding:14px 16px;border-bottom:1px solid #f0f5f2;font-size:11px;font-weight:700;color:#5a7a63;letter-spacing:.5px;">管理員功能</div>
+      <button onclick="closeMenu();goP('admin',document.querySelector('#adm-tab'));loadAdm();" style="width:100%;padding:14px 16px;text-align:left;border:none;background:none;font-size:14px;font-weight:700;color:#0d2b1a;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:inherit;">⚙️ 管理後台</button>
+      <button onclick="closeMenu();signOut();" style="width:100%;padding:14px 16px;text-align:left;border:none;background:none;font-size:14px;font-weight:700;color:#ef4444;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:inherit;border-top:1px solid #f0f5f2;">🚪 登出</button>
+    </div>
   </div>
   <div class="pages" id="main-pages" style="display:none;">
 
@@ -610,6 +626,16 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
       </div>
       <div style="height:24px;"></div>
     </div>
+    <div class="page" id="pg-leader">
+      <div style="font-size:15px;font-weight:900;color:#0d2b1a;margin-bottom:14px;" id="leader-group-title">我的組員今日狀況</div>
+      <div id="leader-member-list"><div style="text-align:center;padding:32px;color:#5a7a63;font-size:13px;">載入中...</div></div>
+      <!-- 歷史記錄詳細 -->
+      <div id="leader-history-view" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;cursor:pointer;color:#3ecf8e;font-size:14px;font-weight:700;" onclick="document.getElementById('leader-history-view').style.display='none';document.getElementById('leader-member-list').style.display='block';">← 返回</div>
+        <div id="leader-history-content"></div>
+      </div>
+    </div>
+
   </div>
 
   <div class="tabs" id="main-tabs" style="display:none;">
@@ -619,6 +645,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
     <button class="tab" onclick="goP('diary',this);loadDiary()"><div class="tab-ic">📖</div><div>紀錄</div><div class="tab-dot"></div></button>
     <button class="tab" onclick="goP('profile',this)"><div class="tab-ic">👤</div><div>個人</div><div class="tab-dot"></div></button>
     <button class="tab" id="adm-tab" style="display:none;" onclick="goP('admin',this);loadAdm()"><div class="tab-ic">⚙️</div><div>管理</div><div class="tab-dot"></div></button>
+    <button class="tab" id="leader-tab" style="display:none;" onclick="goP('leader',this);loadLeaderView()"><div class="tab-ic">👥</div><div>我的組</div><div class="tab-dot"></div></button>
   </div>
 </div>
 
@@ -725,7 +752,13 @@ function sv(v){
     document.getElementById('main-top').style.display='flex';
     document.getElementById('main-pages').style.display='block';
     document.getElementById('main-tabs').style.display='flex';
-    if(CU&&CU.email===ADMIN)document.getElementById('adm-tab').style.display='flex';
+    if(CU&&CU.email===ADMIN){
+      document.getElementById('adm-tab').style.display='flex';
+      document.getElementById('menu-btn').style.display='flex';
+    }
+    if(UP&&UP.is_leader){
+      document.getElementById('leader-tab').style.display='flex';
+    }
     loadApp();
   }
 }
@@ -1411,10 +1444,7 @@ async function aLU(){
         </div>
         <div style="display:flex; flex-direction:column; gap:6px;">
           ${leaderBtn}
-         <button class="adm-bo" style="width:auto;padding:6px 10px;margin-top:0;" onclick="aMG('${u.id}','${u.name}')">換組別</button>
-<button class="adm-bo" style="width:auto;padding:6px 10px;margin-top:0;border-color:${u.is_admin?'#fca5a5':'#c8e0d0'};color:${u.is_admin?'#ef4444':'#1a4a2e'};" onclick="toggleAdmin('${u.id}',${u.is_admin})">
-  ${u.is_admin?'🔑 移除管理員':'🔑 設管理員'}
-</button>
+          <button class="adm-bo" style="width:auto;padding:6px 10px;margin-top:0;" onclick="aMG('${u.id}','${u.name}')">換組別</button>
         </div>
       </div>`;}).join('');}
   } // <--- 🌟 就是漏了這個大括號！它是用來關閉 aLU() 的
@@ -1555,13 +1585,101 @@ async function aLG() {
     `;
   }).join('');
 }
-  async function toggleAdmin(userId, currentStatus) {
-  if(!window.confirm(currentStatus ? '確定移除管理員權限？' : '確定設為管理員？')) return;
-  const {error} = await sb.from('users').update({is_admin: !currentStatus}).eq('id', userId);
-  if(error){toast('設定失敗');return;}
-  toast(currentStatus ? '✓ 已移除管理員' : '✓ 已設為管理員');
-  await aLU();
+// 漢堡選單
+function toggleMenu(){
+  const m=document.getElementById('hamburger-menu');
+  m.style.display=m.style.display==='none'?'block':'none';
 }
+function closeMenu(){
+  document.getElementById('hamburger-menu').style.display='none';
+}
+
+// 小組長專區
+async function loadLeaderView(){
+  if(!UP||!UP.group_id)return;
+  document.getElementById('leader-member-list').style.display='block';
+  document.getElementById('leader-history-view').style.display='none';
+
+  // 取得組別資訊
+  const {data:grp}=await sb.from('groups').select('name,emoji').eq('id',UP.group_id).single();
+  if(grp)document.getElementById('leader-group-title').textContent=(grp.emoji||'👥')+' '+grp.name+' — 今日狀況';
+
+  // 取得同組學員
+  const {data:members}=await sb.from('users').select('*').eq('group_id',UP.group_id).eq('status','approved');
+  if(!members||!members.length){
+    document.getElementById('leader-member-list').innerHTML='<div style="text-align:center;padding:32px;color:#5a7a63;font-size:13px;">組內尚無其他成員</div>';
+    return;
+  }
+
+  // 取得今日所有組員的記錄
+  const td=new Date().toISOString().split('T')[0];
+  const memberIds=members.map(m=>m.id);
+  const {data:logs}=await sb.from('daily_logs').select('*').in('user_id',memberIds).eq('log_date',td);
+  const logMap={};(logs||[]).forEach(l=>logMap[l.user_id]=l);
+
+  const MOODS=['','😔','😐','🙂','😄','🔥'];
+  document.getElementById('leader-member-list').innerHTML=members.map(u=>{
+    const l=logMap[u.id];
+    const hasLog=!!l;
+    let cal=0,pro=0;
+    if(l&&l.meals)l.meals.forEach(m=>m.forEach(i=>{cal+=i.c;pro+=i.p;}));
+    return`<div class="adm-c" style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#0d2b1a;">${u.is_leader?'👑 ':''}${u.name}</div>
+          <div style="font-size:11px;color:${hasLog?'#3ecf8e':'#ef4444'};font-weight:700;margin-top:2px;">${hasLog?'✓ 今日已記錄':'✗ 今日尚未記錄'}</div>
+        </div>
+        <button onclick="loadMemberHistory('${u.id}','${u.name}')" style="padding:8px 12px;background:#f2f8f5;border:1.5px solid #c8e0d0;border-radius:9px;font-size:12px;font-weight:700;color:#0d2b1a;cursor:pointer;font-family:inherit;">歷史</button>
+      </div>
+      ${hasLog?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;">
+        <div style="background:#f2f8f5;border-radius:9px;padding:8px;text-align:center;">
+          <div style="font-size:13px;font-weight:700;color:#0d2b1a;">${Math.round(cal)}</div>
+          <div style="font-size:10px;color:#5a7a63;">大卡</div>
+        </div>
+        <div style="background:#f2f8f5;border-radius:9px;padding:8px;text-align:center;">
+          <div style="font-size:13px;font-weight:700;color:#0d2b1a;">${pro.toFixed(1)}g</div>
+          <div style="font-size:10px;color:#5a7a63;">蛋白質</div>
+        </div>
+        <div style="background:#f2f8f5;border-radius:9px;padding:8px;text-align:center;">
+          <div style="font-size:13px;font-weight:700;color:#3b82f6;">${l.water_ml||0}ml</div>
+          <div style="font-size:10px;color:#5a7a63;">喝水</div>
+        </div>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function loadMemberHistory(uid, name){
+  document.getElementById('leader-member-list').style.display='none';
+  document.getElementById('leader-history-view').style.display='block';
+  document.getElementById('leader-history-content').innerHTML='<div style="text-align:center;padding:20px;color:#5a7a63;">載入中...</div>';
+
+  const {data:logs}=await sb.from('daily_logs').select('*').eq('user_id',uid).order('log_date',{ascending:false}).limit(14);
+  if(!logs||!logs.length){
+    document.getElementById('leader-history-content').innerHTML=`<div style="text-align:center;padding:32px;color:#5a7a63;font-size:13px;">${name} 尚無記錄</div>`;
+    return;
+  }
+  const MOODS=['','😔','😐','🙂','😄','🔥'];
+  document.getElementById('leader-history-content').innerHTML=`
+    <div style="font-size:14px;font-weight:900;color:#0d2b1a;margin-bottom:12px;">${name} 的近期記錄</div>
+    ${logs.map(l=>{
+      let cal=0,pro=0;if(l.meals)l.meals.forEach(m=>m.forEach(i=>{cal+=i.c;pro+=i.p;}));
+      const d=new Date(l.log_date);
+      const ds=`${d.getMonth()+1}/${d.getDate()}（${['日','一','二','三','四','五','六'][d.getDay()]}）`;
+      return`<div style="background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid #e0ebe5;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <div style="font-size:13px;font-weight:700;color:#0d2b1a;">${ds}</div>
+          ${l.mood?`<div style="font-size:16px;">${MOODS[l.mood]}</div>`:''}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+          <div style="text-align:center;"><div style="font-size:13px;font-weight:700;color:#0d2b1a;">${Math.round(cal)}</div><div style="font-size:10px;color:#5a7a63;">大卡</div></div>
+          <div style="text-align:center;"><div style="font-size:13px;font-weight:700;color:#0d2b1a;">${pro.toFixed(1)}g</div><div style="font-size:10px;color:#5a7a63;">蛋白質</div></div>
+          <div style="text-align:center;"><div style="font-size:13px;font-weight:700;color:#3b82f6;">${l.water_ml||0}ml</div><div style="font-size:10px;color:#5a7a63;">喝水</div></div>
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
 init();
   // --- 🍱 常用餐食組合功能開始 ---
