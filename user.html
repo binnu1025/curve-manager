@@ -391,7 +391,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
   <div id="hamburger-menu" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;" onclick="if(event.target===this)closeMenu()">
     <div style="position:absolute;top:52px;right:8px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:180px;overflow:hidden;">
       <div style="padding:14px 16px;border-bottom:1px solid #f0f5f2;font-size:11px;font-weight:700;color:#5a7a63;letter-spacing:.5px;">管理員功能</div>
-      <button onclick="closeMenu();loadAdm();document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));document.getElementById('pg-admin').classList.add('on');" style="width:100%;padding:14px 16px;text-align:left;border:none;background:none;font-size:14px;font-weight:700;color:#0d2b1a;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:inherit;">⚙️ 管理後台</button>
+      <button onclick="closeMenu();goP('admin',document.querySelector('#adm-tab'));loadAdm();" style="width:100%;padding:14px 16px;text-align:left;border:none;background:none;font-size:14px;font-weight:700;color:#0d2b1a;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:inherit;">⚙️ 管理後台</button>
       <button onclick="closeMenu();signOut();" style="width:100%;padding:14px 16px;text-align:left;border:none;background:none;font-size:14px;font-weight:700;color:#ef4444;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:inherit;border-top:1px solid #f0f5f2;">🚪 登出</button>
     </div>
   </div>
@@ -644,6 +644,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
     <button class="tab" onclick="goP('measure',this)"><div class="tab-ic">📏</div><div>量測</div><div class="tab-dot"></div></button>
     <button class="tab" onclick="goP('diary',this);loadDiary()"><div class="tab-ic">📖</div><div>紀錄</div><div class="tab-dot"></div></button>
     <button class="tab" onclick="goP('profile',this)"><div class="tab-ic">👤</div><div>個人</div><div class="tab-dot"></div></button>
+    <button class="tab" id="adm-tab" style="display:none;" onclick="goP('admin',this);loadAdm()"><div class="tab-ic">⚙️</div><div>管理</div><div class="tab-dot"></div></button>
     <button class="tab" id="leader-tab" style="display:none;" onclick="goP('leader',this);loadLeaderView()"><div class="tab-ic">👥</div><div>我的組</div><div class="tab-dot"></div></button>
   </div>
 </div>
@@ -752,6 +753,7 @@ function sv(v){
     document.getElementById('main-pages').style.display='block';
     document.getElementById('main-tabs').style.display='flex';
     if(CU&&CU.email===ADMIN){
+      document.getElementById('adm-tab').style.display='flex';
       document.getElementById('menu-btn').style.display='flex';
     }
     if(UP&&UP.is_leader){
@@ -1271,26 +1273,6 @@ function cfCustom(){
 
 // ---------------- 儲存與其他邏輯 ----------------
 
-async function saveSection(section){
-  if(!UP)return;
-  const td=new Date().toISOString().split('T')[0];
-  const now=new Date();
-  const timeStr=`${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-  let payload={user_id:UP.id,log_date:td};
-  if(section==='food'){
-    let cal=0,pro=0,cr=0,fat=0;ML.forEach(m=>m.forEach(i=>{cal+=i.c;pro+=i.p;cr+=i.cr;fat+=i.f;}));
-    payload.meals=ML;payload.total_cal=+cal.toFixed(1);payload.total_protein=+pro.toFixed(1);payload.total_carb=+cr.toFixed(1);payload.total_fat=+fat.toFixed(1);
-  } else if(section==='water'){payload.water_ml=WM;}
-  else if(section==='ex'){payload.exercise_type=ET||null;payload.exercise_minutes=parseInt(document.getElementById('ex-min')?.value)||0;}
-  else if(section==='mood'){payload.mood=MOOD;payload.note=document.getElementById('dn')?.value||null;}
-  const {error}=await sb.from('daily_logs').upsert(payload,{onConflict:'user_id,log_date'});
-  if(error){toast('儲存失敗');return;}
-  const stId={food:'food-st',water:'water-st',ex:'ex-st',mood:'mood-st'}[section];
-  const stEl=document.getElementById(stId);
-  if(stEl){stEl.textContent=`✓ 已儲存（${timeStr}）`;stEl.style.color='#3ecf8e';stEl.style.textAlign='center';stEl.style.fontSize='12px';stEl.style.marginTop='8px';}
-  toast('✓ 已儲存！');updGoals();updTip();
-}
-
 async function saveMeas(){
   if(!UP)return;
   const w=document.getElementById('fm-w')?.value;
@@ -1375,6 +1357,9 @@ async function loadDiary(){
     </div>`;
   }).join('');
 }
+// 目前正在編輯的日期
+let EDIT_DATE = null;
+
 function showDiaryDetail(l){
   const el=document.getElementById('diary-list');
   const det=document.getElementById('diary-detail');
@@ -1391,8 +1376,11 @@ function showDiaryDetail(l){
   det.innerHTML=`
     <div class="diary-detail">
       <div class="dd-back" onclick="loadDiary()">← 返回列表</div>
-      <div style="font-size:16px;font-weight:900;color:#0d2b1a;margin-bottom:14px;">${dateStr} 的紀錄</div>
-      ${mealsHtml?`<div class="dd-section"><div class="dd-sec-title">🍽️ 飲食（共 ${Math.round(cal)} 大卡 · 蛋白 ${pro.toFixed(1)}g）</div>${mealsHtml}</div>`:''}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-size:16px;font-weight:900;color:#0d2b1a;">${dateStr} 的紀錄</div>
+        <button onclick="editDiaryDate(${JSON.stringify(l).replace(/"/g,'&quot;')})" style="padding:8px 14px;background:#0d2b1a;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">✏️ 編輯</button>
+      </div>
+      ${mealsHtml?`<div class="dd-section"><div class="dd-sec-title">🍽️ 飲食（共 ${Math.round(cal)} 大卡 · 蛋白 ${pro.toFixed(1)}g）</div>${mealsHtml}</div>`:'<div class="dd-section"><div class="dd-sec-title">🍽️ 飲食</div><div style="font-size:12px;color:#bbb;">尚未記錄</div></div>'}
       <div class="dd-section"><div class="dd-sec-title">💧 喝水</div><div style="font-size:14px;font-weight:700;color:#0d2b1a;">${l.water_ml||0} ml</div></div>
       ${l.exercise_type?`<div class="dd-section"><div class="dd-sec-title">🏃 運動</div><div style="font-size:14px;font-weight:700;color:#0d2b1a;">${l.exercise_type} ${l.exercise_minutes||0} 分鐘</div></div>`:''}
       ${l.sleep_hours?`<div class="dd-section"><div class="dd-sec-title">😴 睡眠</div><div style="font-size:14px;font-weight:700;color:#0d2b1a;">${l.sleep_hours} 小時</div></div>`:''}
@@ -1400,7 +1388,93 @@ function showDiaryDetail(l){
     </div>`;
 }
 
-// ADMIN FUNCTIONS
+function editDiaryDate(l){
+  // 把那天的資料載入到全域變數
+  EDIT_DATE = l.log_date;
+  ML = l.meals && l.meals.length===4 ? l.meals : [[],[],[],[]];
+  WM = l.water_ml || 0;
+  MOOD = l.mood || 3;
+  ET = l.exercise_type || '';
+
+  // 更新畫面
+  for(let i=0;i<4;i++) rMeal(i);
+  document.getElementById('wn').textContent = WM;
+  updWaterBar();
+
+  // 運動
+  if(l.exercise_minutes){
+    document.getElementById('ex-min').value = l.exercise_minutes;
+  }
+  // 還原選中的運動類型
+  if(l.exercise_type){
+    document.querySelectorAll('.ex-item').forEach(el=>{
+      if(el.textContent.includes(l.exercise_type)) el.classList.add('on');
+    });
+    calcExCal();
+  }
+
+  // 心情
+  document.querySelectorAll('.mood-btn').forEach((b,i)=>{
+    b.classList.toggle('on', i+1===MOOD);
+  });
+  const dn=document.getElementById('dn');
+  if(dn) dn.value = l.note||'';
+
+  // 切換到輸入頁，並在頂部顯示提示
+  const tab = document.querySelector('.tab:nth-child(2)');
+  goP('input', tab);
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  if(tab) tab.classList.add('on');
+
+  // 顯示編輯中提示
+  const d = new Date(l.log_date);
+  const dateStr = `${d.getMonth()+1}月${d.getDate()}日`;
+  toast(`✏️ 正在編輯 ${dateStr} 的紀錄`);
+
+  // 把儲存按鈕改成「儲存修改」樣式並顯示日期
+  setTimeout(()=>{
+    ['food-btn','water-btn','ex-btn','mood-btn'].forEach(id=>{
+      const btn=document.getElementById(id);
+      if(btn) btn.textContent=`💾 儲存 ${dateStr} 的修改`;
+    });
+  }, 100);
+}
+
+async function saveSection(section){
+  if(!UP)return;
+  // 使用 EDIT_DATE（編輯舊日記）或今天
+  const td = EDIT_DATE || new Date().toISOString().split('T')[0];
+  const now=new Date();
+  const timeStr=`${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  let payload={user_id:UP.id,log_date:td};
+  if(section==='food'){
+    let cal=0,pro=0,cr=0,fat=0;ML.forEach(m=>m.forEach(i=>{cal+=i.c;pro+=i.p;cr+=i.cr;fat+=i.f;}));
+    payload.meals=ML;payload.total_cal=+cal.toFixed(1);payload.total_protein=+pro.toFixed(1);payload.total_carb=+cr.toFixed(1);payload.total_fat=+fat.toFixed(1);
+  } else if(section==='water'){payload.water_ml=WM;}
+  else if(section==='ex'){payload.exercise_type=ET||null;payload.exercise_minutes=parseInt(document.getElementById('ex-min')?.value)||0;}
+  else if(section==='mood'){payload.mood=MOOD;payload.note=document.getElementById('dn')?.value||null;}
+  const {error}=await sb.from('daily_logs').upsert(payload,{onConflict:'user_id,log_date'});
+  if(error){toast('儲存失敗');return;}
+  const stId={food:'food-st',water:'water-st',ex:'ex-st',mood:'mood-st'}[section];
+  const stEl=document.getElementById(stId);
+  const d=new Date(td);
+  const dateStr=`${d.getMonth()+1}月${d.getDate()}日`;
+  if(stEl){stEl.textContent=`✓ 已儲存${EDIT_DATE?` ${dateStr} 的修改`:''}（${timeStr}）`;stEl.style.color='#3ecf8e';stEl.style.textAlign='center';stEl.style.fontSize='12px';stEl.style.marginTop='8px';}
+  toast(`✓ ${EDIT_DATE?dateStr+' 修改已儲存！':'已儲存！'}`);
+
+  // 儲存完後清除編輯模式，還原按鈕文字
+  if(EDIT_DATE){
+    EDIT_DATE=null;
+    setTimeout(()=>{
+      const labels={food:'💾 儲存飲食紀錄',water:'💾 儲存喝水紀錄',ex:'💾 儲存運動紀錄',mood:'💾 儲存今日狀態'};
+      Object.entries(labels).forEach(([k,v])=>{
+        const btn=document.getElementById(k+'-btn');
+        if(btn) btn.textContent=v;
+      });
+    },100);
+  }
+  updGoals();updTip();
+}
 async function loadAdm(){
   await aLC();await aLU();await aLG();await aLO();
 }
