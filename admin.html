@@ -293,6 +293,23 @@ const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 let allUsers=[], allGroups=[], contestData=null, modalConfirmFn=null;
 
 async function init(){
+  // ── 身份驗證：只有管理員或組長才能進入 ──
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){
+    window.location.href='https://binnu1025.github.io/curve-manager/user.html';
+    return;
+  }
+  const {data:me}=await sb.from('users').select('is_leader').eq('auth_id',session.user.id).maybeSingle();
+  const isAdmin=session.user.email==='binnu1025@gmail.com';
+  const isLeader=me?.is_leader===true;
+  if(!isAdmin&&!isLeader){
+    window.location.href='https://binnu1025.github.io/curve-manager/user.html';
+    return;
+  }
+  // 顯示登入者名稱
+  const avEl=document.getElementById('admin-av');
+  if(avEl)avEl.textContent=session.user.email.charAt(0).toUpperCase();
+
   await loadContest();
   await loadUsers();
   await loadGroups();
