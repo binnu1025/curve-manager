@@ -826,7 +826,6 @@ function rrs(s){
     <div class="fg"><label>電話</label><input class="fi" id="rph" type="tel" placeholder="0912-345-678" value="${RD.phone||''}"></div>
     <div class="fg"><label>性別</label><div class="gr-row"><button class="gb${RD.gender==='female'?' on':''}" onclick="sg('female',this)">女</button><button class="gb${RD.gender==='male'?' on':''}" onclick="sg('male',this)">男</button></div></div>
     <div class="fg2"><div class="fg"><label>年齡</label><input class="fi" id="ra" type="number" placeholder="30" value="${RD.age||''}"></div><div class="fg"><label>身高 cm</label><input class="fi" id="rh" type="number" placeholder="160" value="${RD.height||''}"></div></div>
-    <div class="fg"><label>Email</label><input class="fi" value="${RD.email||''}" readonly style="opacity:.6;"></div>
     <button class="btn-nx" onclick="rn1()">下一步 →</button>`;}
   else if(s===2){b.innerHTML=`
     <div class="nb">⚠️ 初始數值由老師量測填入，作為比賽基準線。未量測可先填 0。</div>
