@@ -121,6 +121,18 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f2f5f3;min-height:100vh;d
 .modal-label{font-size:11px;font-weight:700;color:#5a7a63;margin-bottom:5px;display:block;}
 .toast{position:fixed;bottom:24px;right:24px;background:#0d2b1a;color:#fff;font-size:13px;font-weight:500;padding:11px 20px;border-radius:28px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;}
 .toast.show{opacity:1;}
+.u-item{padding:13px 16px;border-bottom:1px solid #f0f5f2;display:flex;align-items:center;gap:12px;}
+.u-item:last-child{border-bottom:none;}
+.u-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;}
+.u-info{flex:1;min-width:0;}
+.u-name{font-size:13px;font-weight:700;color:#0d2b1a;display:flex;align-items:center;gap:6px;}
+.u-email{font-size:11px;color:#5a7a63;margin-top:1px;}
+.u-meta{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;align-items:center;}
+.u-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.dot-green{background:#3ecf8e;}
+.dot-red{background:#ef4444;}
+.dot-gray{background:#ccc;}
 </style>
 </head>
 <body>
@@ -128,11 +140,12 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f2f5f3;min-height:100vh;d
 <div class="topnav">
   <div class="tn-logo">🌿 曲線管理比賽 <span>管理後台</span></div>
   <div class="tn-tabs">
-    <div class="tn-tab active" onclick="goPage('pending',this)">學員審核 <span id="pending-badge" style="background:rgba(255,200,0,.3);color:#ffd700;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:4px;">0</span></div>
-    <div class="tn-tab" onclick="goPage('groups',this)">分組管理</div>
-    <div class="tn-tab" onclick="goPage('official',this)">官方量測</div>
-    <div class="tn-tab" onclick="goPage('results',this)">比賽結果</div>
-    <div class="tn-tab" onclick="goPage('settings',this)">比賽設定</div>
+    <div class="tn-tab active" onclick="goPage('dashboard',this)">📊 總覽</div>
+    <div class="tn-tab" onclick="goPage('pending',this)">👥 學員 <span id="pending-badge" style="background:rgba(255,200,0,.3);color:#ffd700;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:4px;">0</span></div>
+    <div class="tn-tab" onclick="goPage('groups',this)">🏷️ 分組</div>
+    <div class="tn-tab" onclick="goPage('official',this)">📏 量測</div>
+    <div class="tn-tab" onclick="goPage('results',this)">🏆 結果</div>
+    <div class="tn-tab" onclick="goPage('settings',this)">⚙️ 設定</div>
   </div>
   <div class="tn-right">
     <div class="tn-badge" id="contest-badge">載入中...</div>
@@ -142,23 +155,45 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f2f5f3;min-height:100vh;d
 
 <div class="main">
 
-  <!-- ① 學員審核 -->
-  <div class="screen active" id="screen-pending">
+  <!-- ① 總覽 Dashboard -->
+  <div class="screen active" id="screen-dashboard">
+    <div class="page-title">📊 總覽</div>
+    <div class="page-sub" id="dash-contest-name">載入中...</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="sc-val" id="d-total">—</div><div class="sc-lbl">總學員</div></div>
+      <div class="stat-card"><div class="sc-val" style="color:#f59e0b;" id="d-pending">—</div><div class="sc-lbl">待審核 ⚠️</div></div>
+      <div class="stat-card"><div class="sc-val" style="color:#3ecf8e;" id="d-active">—</div><div class="sc-lbl">今日有記錄</div></div>
+      <div class="stat-card"><div class="sc-val" style="color:#ef4444;" id="d-inactive">—</div><div class="sc-lbl">3天未記錄</div></div>
+    </div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-header"><div class="card-title">📢 發布公告</div><div class="card-sub">學員首頁會看到</div></div>
+      <div style="padding:14px;">
+        <textarea id="ann-text" style="width:100%;padding:10px 12px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:13px;font-family:inherit;resize:none;height:72px;color:#0d2b1a;" placeholder="輸入要給所有學員的公告..."></textarea>
+        <button class="btn btn-green" style="margin-top:8px;width:100%;padding:11px;" onclick="saveAnnounce()">發布公告</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">⚠️ 3天未記錄學員</div></div>
+      <div id="inactive-list"><div style="padding:16px;text-align:center;color:#5a7a63;font-size:13px;">載入中...</div></div>
+    </div>
+  </div>
+
+  <!-- ② 學員管理 -->
+  <div class="screen" id="screen-pending">
+    <div class="page-title">👥 學員管理</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <input id="search-input" type="text" placeholder="🔍 搜尋姓名..." oninput="filterUsers()" style="flex:1;padding:9px 12px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:13px;font-family:inherit;color:#0d2b1a;">
+      <select id="status-filter" onchange="filterUsers()" style="padding:9px 12px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:13px;font-family:inherit;color:#0d2b1a;background:#fff;">
+        <option value="all">全部</option>
+        <option value="pending">待審核</option>
+        <option value="approved">已通過</option>
+        <option value="rejected">已拒絕</option>
+      </select>
+    </div>
     <div class="page-title">學員審核</div>
     <div class="page-sub">審核通過後學員才能使用完整功能</div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="sc-val" id="st-total">—</div><div class="sc-lbl">已報名</div></div>
-      <div class="stat-card"><div class="sc-val" style="color:#f59e0b;" id="st-pending">—</div><div class="sc-lbl">待審核</div></div>
-      <div class="stat-card"><div class="sc-val" style="color:#3ecf8e;" id="st-approved">—</div><div class="sc-lbl">已通過</div></div>
-      <div class="stat-card"><div class="sc-val" style="color:#ef4444;" id="st-rejected">—</div><div class="sc-lbl">已拒絕</div></div>
-    </div>
     <div class="card">
-      <div class="card-header"><div><div class="card-title">待審核</div><div class="card-sub">學員 Google 登入後報名，等候審核</div></div></div>
-      <div id="pending-list"><div style="padding:20px;text-align:center;color:#5a7a63;font-size:13px;">載入中...</div></div>
-    </div>
-    <div class="card">
-      <div class="card-header"><div class="card-title">已通過學員</div><div style="font-size:11px;color:#5a7a63;">點「調整組別」可移動組別</div></div>
-      <div id="approved-list"><div style="padding:20px;text-align:center;color:#5a7a63;font-size:13px;">載入中...</div></div>
+      <div id="user-list"><div style="padding:20px;text-align:center;color:#5a7a63;font-size:13px;">載入中...</div></div>
     </div>
   </div>
 
@@ -264,11 +299,21 @@ async function init(){
   await loadOfficialMeasurements();
   await loadResults();
   loadSettings();
+  // 載入現有公告
+  if(contestData&&contestData.note){
+    const annEl=document.getElementById('ann-text');
+    if(annEl)annEl.value=contestData.note;
+  }
+  // Dashboard 比賽名稱
+  if(contestData){
+    const dn=document.getElementById('dash-contest-name');
+    if(dn)dn.textContent=contestData.name||'';
+  }
 }
 
 // ── CONTEST ──
 async function loadContest(){
-  const {data}=await sb.from('contests').select('*').eq('is_active',true).single();
+  const {data}=await sb.from('contests').select('*').eq('is_active',true).maybeSingle();
   contestData=data;
   if(data){
     const days=Math.floor((new Date()-new Date(data.start_date))/(1000*60*60*24))+1;
@@ -301,62 +346,113 @@ function loadSettings(){}
 async function loadUsers(){
   const {data}=await sb.from('users').select('*,groups(name,emoji)').order('created_at',{ascending:false});
   allUsers=data||[];
-  renderPendingList();
-  renderApprovedList();
+  // 查近3天有記錄的學員
+  const threeDaysAgo=new Date();threeDaysAgo.setDate(threeDaysAgo.getDate()-3);
+  const {data:logs}=await sb.from('daily_logs').select('user_id').gte('log_date',threeDaysAgo.toISOString().split('T')[0]);
+  activeUserIds=new Set((logs||[]).map(l=>l.user_id));
+  filterUsers();
   updateStats();
 }
+
+// 設定/取消組長
+async function toggleLeader(uid,name,isLeader){
+  const {error}=await sb.from('users').update({is_leader:!isLeader}).eq('id',uid);
+  if(error){showToast('操作失敗');return;}
+  showToast(isLeader?`✓ 已取消 ${name} 的組長身分`:`👑 已將 ${name} 設為組長`);
+  await loadUsers();
+}
+
+// 發布公告
+async function saveAnnounce(){
+  if(!contestData){showToast('尚無比賽資料');return;}
+  const txt=document.getElementById('ann-text')?.value.trim();
+  const {error}=await sb.from('contests').update({note:txt||null}).eq('id',contestData.id);
+  if(error){showToast('發布失敗');return;}
+  showToast(txt?'✓ 公告已發布！':'✓ 公告已清除！');
+}
+let activeUserIds=new Set();
+
 function updateStats(){
   const total=allUsers.length;
   const pending=allUsers.filter(u=>u.status==='pending').length;
-  const approved=allUsers.filter(u=>u.status==='approved').length;
-  const rejected=allUsers.filter(u=>u.status==='rejected').length;
-  document.getElementById('st-total').textContent=total;
-  document.getElementById('st-pending').textContent=pending;
-  document.getElementById('st-approved').textContent=approved;
-  document.getElementById('st-rejected').textContent=rejected;
+  const approved=allUsers.filter(u=>u.status==='approved');
+  const active=approved.filter(u=>activeUserIds.has(u.id)).length;
+  const inactive=approved.filter(u=>!activeUserIds.has(u.id)).length;
+  // Dashboard stats
+  const dTotal=document.getElementById('d-total');if(dTotal)dTotal.textContent=total;
+  const dPend=document.getElementById('d-pending');if(dPend)dPend.textContent=pending;
+  const dAct=document.getElementById('d-active');if(dAct)dAct.textContent=active;
+  const dIn=document.getElementById('d-inactive');if(dIn)dIn.textContent=inactive;
   document.getElementById('pending-badge').textContent=pending;
+  renderInactiveList(approved.filter(u=>!activeUserIds.has(u.id)));
 }
+
+function renderInactiveList(users){
+  const el=document.getElementById('inactive-list');if(!el)return;
+  if(!users.length){el.innerHTML='<div style="padding:16px;text-align:center;color:#3ecf8e;font-size:13px;">✓ 所有學員近3天都有記錄！</div>';return;}
+  el.innerHTML=users.map(u=>`
+    <div class="u-item">
+      <div class="u-av" style="background:${avatarColor(u.name)};">${u.name.charAt(0)}</div>
+      <div class="u-info">
+        <div class="u-name">${u.name}</div>
+        <div class="u-email">${u.groups?u.groups.emoji+' '+u.groups.name:'未分組'}</div>
+      </div>
+      <span class="tag ta">3天未記錄</span>
+    </div>`).join('');
+}
+
 function typeLabel(t){return{individual:'個人組',team:'團體組',both:'兩組都參加'}[t]||t;}
 function tagClass(t){return{individual:'tb',team:'tg',both:'tp'}[t]||'ta';}
 const COLORS=['#c0392b','#8e44ad','#0891b2','#16a085','#d97706','#2980b9','#4f46e5','#be185d','#065f46','#7c3aed'];
 function avatarColor(name){return COLORS[(name.charCodeAt(0)||0)%COLORS.length];}
 
-function renderPendingList(){
-  const pending=allUsers.filter(u=>u.status==='pending');
-  const el=document.getElementById('pending-list');
-  if(!pending.length){el.innerHTML='<div style="padding:20px;text-align:center;color:#5a7a63;font-size:13px;">目前沒有待審核的學員 ✓</div>';return;}
-  el.innerHTML=pending.map(u=>`
-    <div class="pending-item" id="pitem-${u.id}">
-      <div class="pi-av" style="background:${avatarColor(u.name)};">${u.name.charAt(0)}</div>
-      <div class="pi-info">
-        <div class="pi-name">${u.name}</div>
-        <div class="pi-email">${u.email||''}</div>
-        <div class="pi-tags">
-          <span class="tag ${tagClass(u.contest_type)}">${typeLabel(u.contest_type)}</span>
-          ${u.height_cm?`<span class="pi-data">${u.height_cm}cm · ${u.age}歲 · ${u.gender==='female'?'女':'男'}</span>`:''}
-        </div>
-      </div>
-      <div class="pi-actions">
-        <button class="btn btn-green btn-sm" onclick="updateStatus('${u.id}','approved')">✓ 通過</button>
-        <button class="btn btn-red btn-sm" onclick="updateStatus('${u.id}','rejected')">✕</button>
-      </div>
-    </div>`).join('');
+function filterUsers(){
+  const q=(document.getElementById('search-input')?.value||'').trim().toLowerCase();
+  const st=document.getElementById('status-filter')?.value||'all';
+  const filtered=allUsers.filter(u=>{
+    const matchName=u.name.toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q);
+    const matchStatus=st==='all'||u.status===st;
+    return matchName&&matchStatus;
+  });
+  renderUserList(filtered);
 }
 
-function renderApprovedList(){
-  const approved=allUsers.filter(u=>u.status==='approved');
-  const el=document.getElementById('approved-list');
-  if(!approved.length){el.innerHTML='<div style="padding:16px;text-align:center;color:#5a7a63;font-size:13px;">尚無已通過學員</div>';return;}
-  el.innerHTML=`<table class="tbl"><thead><tr><th>姓名</th><th>Email</th><th>參賽類型</th><th>組別</th><th>報名日期</th><th>操作</th></tr></thead><tbody>${
-    approved.map(u=>`<tr>
-      <td>${u.name}</td>
-      <td style="font-size:11px;color:#5a7a63;">${u.email||'—'}</td>
-      <td><span class="tag ${tagClass(u.contest_type)}">${typeLabel(u.contest_type)}</span></td>
-      <td>${u.groups?`<span class="tag tg">${u.groups.emoji} ${u.groups.name}</span>`:'<span style="color:#aaa;font-size:11px;">未分組</span>'}</td>
-      <td style="font-size:11px;color:#5a7a63;">${u.created_at?u.created_at.slice(5,10):''}</td>
-      <td><button class="btn btn-outline btn-sm" onclick="openMoveGroup('${u.id}','${u.name}')">調整組別</button></td>
-    </tr>`).join('')
-  }</tbody></table>`;
+function renderUserList(users){
+  const el=document.getElementById('user-list');
+  if(!users||!el)return;
+  if(!users.length){el.innerHTML='<div style="padding:20px;text-align:center;color:#5a7a63;font-size:13px;">沒有符合的學員</div>';return;}
+  const statusLabel={pending:'待審核',approved:'已通過',rejected:'已拒絕'};
+  const statusColor={pending:'#f59e0b',approved:'#3ecf8e',rejected:'#ef4444'};
+  el.innerHTML=users.map(u=>{
+    const isActive=activeUserIds.has(u.id);
+    const isApproved=u.status==='approved';
+    return`<div class="u-item">
+      <div class="u-av" style="background:${avatarColor(u.name)};">${u.name.charAt(0)}</div>
+      <div class="u-info">
+        <div class="u-name">
+          ${u.is_leader?'👑 ':''}${u.name}
+          <span class="dot ${isApproved?(isActive?'dot-green':'dot-red'):'dot-gray'}"></span>
+        </div>
+        <div class="u-email">${u.email||''}</div>
+        <div class="u-meta">
+          <span style="font-size:10px;font-weight:700;color:${statusColor[u.status]}">${statusLabel[u.status]||''}</span>
+          <span class="tag ${tagClass(u.contest_type)}">${typeLabel(u.contest_type)}</span>
+          ${u.groups?`<span class="tag tg">${u.groups.emoji} ${u.groups.name}</span>`:''}
+          ${isApproved&&!isActive?'<span class="tag ta">3天未記錄</span>':''}
+        </div>
+      </div>
+      <div class="u-actions">
+        ${u.status==='pending'?`
+          <button class="btn btn-green btn-sm" onclick="updateStatus('${u.id}','approved')">✓ 通過</button>
+          <button class="btn btn-red btn-sm" onclick="updateStatus('${u.id}','rejected')">✕</button>
+        `:''}
+        ${isApproved?`
+          <button class="btn btn-outline btn-sm" onclick="openMoveGroup('${u.id}','${u.name}')">換組</button>
+          <button class="btn btn-outline btn-sm" onclick="toggleLeader('${u.id}','${u.name}',${!!u.is_leader})">${u.is_leader?'取消組長':'設組長'}</button>
+        `:''}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 async function updateStatus(userId,status){
@@ -369,7 +465,7 @@ async function updateStatus(userId,status){
 
 async function createOfficialMeasurementRecord(userId){
   // check if already exists
-  const {data}=await sb.from('official_measurements').select('id').eq('user_id',userId).single();
+  const {data}=await sb.from('official_measurements').select('id').eq('user_id',userId).maybeSingle();
   if(!data){
     await sb.from('official_measurements').insert({user_id:userId,contest_id:contestData?.id});
   }
@@ -632,6 +728,7 @@ function goPage(name,el){
   document.querySelectorAll('.tn-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
+  if(name==='pending'){filterUsers();}
 }
 function showToast(msg){
   const t=document.getElementById('toast');
