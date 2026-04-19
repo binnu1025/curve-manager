@@ -239,12 +239,14 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f2f5f3;min-height:100vh;d
   <div class="screen" id="screen-results">
     <div class="page-title">比賽結果</div>
     <div class="page-sub">以官方開賽 vs 結賽數值計算排名</div>
-    <div style="display:flex;gap:10px;margin-bottom:16px;">
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
       <button class="btn btn-green" id="res-ind-btn" onclick="switchResult('individual',this)">🏃 個人組</button>
       <button class="btn btn-outline" id="res-team-btn" onclick="switchResult('team',this)">👥 團體組</button>
+      <button class="btn btn-outline" id="res-plat-btn" onclick="switchResult('platinum',this)">🌟 白金專區</button>
     </div>
     <div id="result-individual" class="card"></div>
     <div id="result-team" class="card" style="display:none;"></div>
+    <div id="result-platinum" style="display:none;"></div>
   </div>
 
   <!-- ⑤ 比賽設定 -->
@@ -269,6 +271,16 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f2f5f3;min-height:100vh;d
     </div>
     <div style="padding:0 4px;">
       <button class="btn btn-green" style="padding:12px 28px;font-size:13px;" onclick="saveSettings()">儲存設定</button>
+    </div>
+    <div class="card" style="margin-top:14px;">
+      <div class="card-header"><div class="card-title">🌟 白金名單管理</div><div class="card-sub">學員報名時可選擇</div></div>
+      <div style="padding:14px;">
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <input id="new-team-name" type="text" placeholder="輸入白金姓名" style="flex:1;padding:10px 12px;border:1.5px solid #e0ebe5;border-radius:10px;font-size:14px;font-family:inherit;color:#0d2b1a;">
+          <button class="btn btn-green" onclick="addTeam()">新增</button>
+        </div>
+        <div id="team-list"><div style="text-align:center;color:#aaa;font-size:12px;padding:8px;">載入中...</div></div>
+      </div>
     </div>
   </div>
 
@@ -299,7 +311,41 @@ const SUPABASE_ANON_KEY = 'sb_publishable_d5pjEDl-T2mE_B86Aj5F8Q_pNzpUNcT';
 const {createClient}=supabase;
 const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-let allUsers=[], allGroups=[], contestData=null, modalConfirmFn=null;
+let allUsers=[], allGroups=[], allTeams=[], contestData=null, modalConfirmFn=null;
+
+async function loadTeams(){
+  const {data}=await sb.from('teams').select('*').order('name');
+  allTeams=data||[];
+  renderTeamList();
+}
+
+async function renderTeamList(){
+  const el=document.getElementById('team-list');if(!el)return;
+  if(!allTeams.length){el.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:8px;">尚未新增白金名單</div>';return;}
+  el.innerHTML=allTeams.map(t=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f5f2;">
+      <span style="font-size:14px;font-weight:500;color:#0d2b1a;">🌟 ${t.name}</span>
+      <button onclick="deleteTeam('${t.id}','${t.name}')" class="btn btn-red btn-sm">刪除</button>
+    </div>`).join('');
+}
+
+async function addTeam(){
+  const name=document.getElementById('new-team-name')?.value.trim();
+  if(!name){showToast('請輸入白金姓名');return;}
+  const {error}=await sb.from('teams').insert({name});
+  if(error){showToast('新增失敗：'+error.message);return;}
+  document.getElementById('new-team-name').value='';
+  showToast('✅ 已新增 '+name);
+  await loadTeams();
+}
+
+async function deleteTeam(id,name){
+  if(!confirm('確定刪除「'+name+'」？'))return;
+  const {error}=await sb.from('teams').delete().eq('id',id);
+  if(error){showToast('刪除失敗');return;}
+  showToast('✓ 已刪除 '+name);
+  await loadTeams();
+}
 
 async function init(){
   // ── 身份驗證：只有管理員或組長才能進入 ──
@@ -324,6 +370,7 @@ async function init(){
   await loadGroups();
   await loadOfficialMeasurements();
   await loadResults();
+  await loadTeams();
   loadSettings();
   // 載入現有公告
   if(contestData&&contestData.note){
@@ -686,8 +733,72 @@ function renderTeamResult(data){
 function switchResult(t,el){
   document.getElementById('result-individual').style.display=t==='individual'?'block':'none';
   document.getElementById('result-team').style.display=t==='team'?'block':'none';
+  document.getElementById('result-platinum').style.display=t==='platinum'?'block':'none';
   document.getElementById('res-ind-btn').className='btn '+(t==='individual'?'btn-green':'btn-outline');
   document.getElementById('res-team-btn').className='btn '+(t==='team'?'btn-green':'btn-outline');
+  document.getElementById('res-plat-btn').className='btn '+(t==='platinum'?'btn-green':'btn-outline');
+  if(t==='platinum')renderPlatinumResult();
+}
+
+async function renderPlatinumResult(){
+  const el=document.getElementById('result-platinum');if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:20px;color:#5a7a63;font-size:13px;">載入中...</div>';
+
+  // 取得所有有白金歸屬的已通過學員
+  const {data:users}=await sb.from('users').select('*,teams(name)').eq('status','approved').not('team_id','is',null);
+  if(!users||!users.length){
+    el.innerHTML='<div class="card" style="padding:20px;text-align:center;color:#5a7a63;font-size:13px;">尚無學員填寫白金歸屬</div>';
+    return;
+  }
+
+  // 取得官方量測數據
+  const {data:oms}=await sb.from('official_measurements').select('*');
+
+  // 按白金分組（只要有報名就顯示）
+  const byTeam={};
+  users.forEach(u=>{
+    const tn=u.teams?.name||'未知';
+    if(!byTeam[tn])byTeam[tn]=[];
+    const om=(oms||[]).find(o=>o.user_id===u.id)||{};
+    byTeam[tn].push({...u, om});
+  });
+
+  const teams=Object.keys(byTeam).sort();
+  el.innerHTML=teams.map(tn=>{
+    const members=byTeam[tn];
+    return`<div class="card" style="margin-bottom:14px;">
+      <div class="card-header">
+        <div class="card-title">🌟 ${tn} 的夥伴</div>
+        <div class="card-sub">${members.length} 人參賽</div>
+      </div>
+      <div>${members.map(u=>{
+        const om=u.om;
+        const hasEnd=om.end_locked&&om.weight_end&&om.bodyfat_end;
+        const wDiff=hasEnd?(om.weight_start-om.weight_end).toFixed(1):null;
+        const fDiff=hasEnd?(om.bodyfat_start-om.bodyfat_end).toFixed(1):null;
+        return`<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #f5f8f6;">
+          <div style="width:36px;height:36px;border-radius:50%;background:${avatarColor(u.name)};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;">${u.name.charAt(0)}</div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:700;color:#0d2b1a;">${u.name}</div>
+            <div style="font-size:11px;color:#5a7a63;margin-top:2px;">
+              ${hasEnd
+                ? `${om.weight_start}→${om.weight_end}kg · ${om.bodyfat_start}→${om.bodyfat_end}%`
+                : om.start_locked
+                  ? `開賽 ${om.weight_start}kg / ${om.bodyfat_start}% · 進行中 🏃`
+                  : '尚待官方量測'}
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            ${hasEnd
+              ? `<div style="font-size:13px;font-weight:700;color:${wDiff>0?'#3ecf8e':'#ef4444'};">${wDiff>0?'▼':'▲'}${Math.abs(wDiff)}kg</div>
+                 <div style="font-size:12px;color:${fDiff>0?'#3ecf8e':'#ef4444'};">${fDiff>0?'▼':'▲'}${Math.abs(fDiff)}%</div>`
+              : `<span style="font-size:11px;background:#d4f0e2;color:#065f46;padding:3px 8px;border-radius:10px;font-weight:700;">進行中</span>`
+            }
+          </div>
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  }).join('');
 }
 
 // ── MODAL HELPERS ──
