@@ -391,7 +391,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
   <div id="hamburger-menu" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;" onclick="if(event.target===this)closeMenu()">
     <div style="position:absolute;top:52px;right:8px;background:#fff;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.18);min-width:180px;overflow:hidden;">
       <div style="padding:14px 16px;border-bottom:1px solid #f0f5f2;font-size:11px;font-weight:700;color:#5a7a63;letter-spacing:.5px;">管理員功能</div>
-      <button onclick="window.location.href='https://binnu1025.github.io/curve-manager/admin.html'" style="width:100%;padding:14px 16px;text-align:left;border:none;background:none;font-size:14px;font-weight:700;color:#0d2b1a;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:inherit;">⚙️ 管理後台</button>
+      <button onclick="closeMenu();window.location.href='https://binnu1025.github.io/curve-manager/admin.html'" style="width:100%;padding:14px 16px;text-align:left;border:none;background:none;font-size:14px;font-weight:700;color:#0d2b1a;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:inherit;">⚙️ 管理後台</button>
       <button onclick="closeMenu();signOut();" style="width:100%;padding:14px 16px;text-align:left;border:none;background:none;font-size:14px;font-weight:700;color:#ef4444;cursor:pointer;display:flex;align-items:center;gap:10px;font-family:inherit;border-top:1px solid #f0f5f2;">🚪 登出</button>
     </div>
   </div>
@@ -751,7 +751,7 @@ function sv(v){
     document.getElementById('main-top').style.display='flex';
     document.getElementById('main-pages').style.display='block';
     document.getElementById('main-tabs').style.display='flex';
-    if(CU&&CU.email===ADMIN){
+    if(CU&&(CU.email===ADMIN||UP?.is_leader)){
       document.getElementById('menu-btn').style.display='flex';
     }
     if(UP&&UP.is_leader){
@@ -826,6 +826,7 @@ function rrs(s){
     <div class="fg"><label>電話</label><input class="fi" id="rph" type="tel" placeholder="0912-345-678" value="${RD.phone||''}"></div>
     <div class="fg"><label>性別</label><div class="gr-row"><button class="gb${RD.gender==='female'?' on':''}" onclick="sg('female',this)">女</button><button class="gb${RD.gender==='male'?' on':''}" onclick="sg('male',this)">男</button></div></div>
     <div class="fg2"><div class="fg"><label>年齡</label><input class="fi" id="ra" type="number" placeholder="30" value="${RD.age||''}"></div><div class="fg"><label>身高 cm</label><input class="fi" id="rh" type="number" placeholder="160" value="${RD.height||''}"></div></div>
+    <div class="fg"><label>Email</label><input class="fi" value="${RD.email||''}" readonly style="opacity:.6;"></div>
     <button class="btn-nx" onclick="rn1()">下一步 →</button>`;}
   else if(s===2){b.innerHTML=`
     <div class="nb">⚠️ 初始數值由老師量測填入，作為比賽基準線。未量測可先填 0。</div>
