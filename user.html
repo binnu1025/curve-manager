@@ -760,7 +760,57 @@ function sv(v){
     loadApp();
   }
 }
-document.getElementById('login-btn').onclick=async()=>{await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.href}});};
+// ===== WebView 偵測與登入 =====
+function isWebView(){
+  const ua=navigator.userAgent;
+  return /FBAN|FBAV|Line\/|Instagram|MicroMessenger|WebView|wv\b/.test(ua)||
+    (ua.includes('Android')&&/Version\/\d/.test(ua)&&!ua.includes('Chrome'))||
+    (ua.includes('iPhone')&&!ua.includes('Safari'));
+}
+
+function showOpenInBrowserModal(){
+  const url=window.location.href;
+  // 嘗試用 intent scheme 跳 Chrome（Android）
+  const intentUrl='intent://'+url.replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;end';
+  
+  const ov=document.createElement('div');
+  ov.id='webview-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:20px;';
+  ov.innerHTML=`
+    <div style="background:#fff;border-radius:24px;padding:28px 22px;width:100%;max-width:400px;">
+      <div style="font-size:32px;text-align:center;margin-bottom:12px;">🌐</div>
+      <div style="font-size:17px;font-weight:900;color:#0d2b1a;text-align:center;margin-bottom:8px;">請用瀏覽器開啟</div>
+      <div style="font-size:13px;color:#5a7a63;text-align:center;line-height:1.8;margin-bottom:20px;">
+        Google 登入不支援 LINE / FB 內嵌瀏覽器<br>請複製網址，用 <strong>Chrome</strong> 或 <strong>Safari</strong> 開啟
+      </div>
+      <div style="background:#f2f8f5;border-radius:12px;padding:12px 14px;margin-bottom:14px;word-break:break-all;font-size:12px;color:#3ecf8e;font-weight:700;">${url}</div>
+      <button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url}').then(()=>{document.getElementById('copy-tip').style.display='block';})" 
+        style="width:100%;padding:15px;background:#0d2b1a;color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">
+        📋 複製網址
+      </button>
+      <div id="copy-tip" style="display:none;text-align:center;font-size:12px;color:#3ecf8e;font-weight:700;margin-bottom:8px;">✓ 已複製！請開啟 Chrome 貼上網址</div>
+      <button onclick="window.location.href='${intentUrl}'"
+        style="width:100%;padding:13px;background:#4285f4;color:#fff;border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">
+        🚀 直接用 Chrome 開啟（Android）
+      </button>
+      <button onclick="document.getElementById('webview-ov').remove()"
+        style="width:100%;padding:12px;background:none;border:1.5px solid #e0ebe5;border-radius:13px;font-size:13px;color:#5a7a63;cursor:pointer;">
+        繼續（可能無法登入）
+      </button>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+document.getElementById('login-btn').onclick=async()=>{
+  if(isWebView()){
+    showOpenInBrowserModal();
+    return;
+  }
+  await sb.auth.signInWithOAuth({
+    provider:'google',
+    options:{redirectTo:'https://binnu1025.github.io/curve-manager/user.html'}
+  });
+};
 document.getElementById('pending-logout').onclick=signOut;
 async function signOut(){await sb.auth.signOut();sv('login');}
 
