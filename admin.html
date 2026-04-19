@@ -10,16 +10,16 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{max-width:100%;overflow-x:hidden;}
 body{font-family:'Noto Sans TC',sans-serif;background:#f2f5f3;min-height:100vh;display:flex;flex-direction:column;}
-.topnav{background:#0d2b1a;padding:0 20px;height:52px;display:flex;align-items:center;gap:0;flex-shrink:0;}
-.tn-logo{font-size:14px;font-weight:900;color:#fff;margin-right:24px;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+.topnav{background:#0d2b1a;padding:0 12px;height:52px;display:flex;align-items:center;gap:0;flex-shrink:0;overflow:hidden;}
+.tn-logo{font-size:13px;font-weight:900;color:#fff;margin-right:8px;display:flex;align-items:center;gap:6px;flex:1;min-width:0;overflow:hidden;}
 .tn-logo span{background:#3ecf8e;color:#0d2b1a;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;}
 .tn-tabs{display:flex;height:100%;overflow-x:auto;}
 .tn-tabs::-webkit-scrollbar{display:none;}
 .tn-tab{padding:0 14px;height:100%;display:flex;align-items:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;flex-shrink:0;}
 .tn-tab:hover{color:rgba(255,255,255,.8);}
 .tn-tab.active{color:#fff;border-bottom-color:#3ecf8e;}
-.tn-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.tn-badge{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:11px;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+.tn-right{margin-left:8px;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.tn-badge{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:11px;padding:4px 10px;border-radius:20px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;}
 .tn-av{width:28px;height:28px;border-radius:50%;background:#3ecf8e;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#0d2b1a;cursor:pointer;}
 .main{flex:1;padding:14px;overflow-y:auto;overflow-x:hidden;}
 .screen{display:none;}
@@ -61,7 +61,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f2f5f3;min-height:100vh;d
 .pi-tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
 .pi-data{font-size:11px;color:#5a7a63;background:#f5f8f6;border-radius:8px;padding:3px 9px;}
 .pi-actions{display:flex;gap:6px;flex-shrink:0;}
-.groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;padding:14px;}
+.groups-grid{display:grid;grid-template-columns:1fr;gap:10px;padding:12px;}@media(min-width:500px){.groups-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}}
 .group-card{background:#f5f8f6;border-radius:12px;padding:12px;border:1.5px solid #e0ebe5;}
 .gc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
 .gc-name-input{font-size:13px;font-weight:700;color:#0d2b1a;border:none;background:none;font-family:inherit;width:100%;cursor:text;}
@@ -90,7 +90,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f2f5f3;min-height:100vh;d
 .om-divider{font-size:18px;color:#ccc;padding-bottom:2px;}
 .om-save{padding:10px;background:#3ecf8e;color:#0d2b1a;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;grid-column:1/-1;width:100%;margin-top:4px;}
 .locked-msg{font-size:11px;color:#5a7a63;background:#f5f8f6;border-radius:8px;padding:6px 11px;margin-top:7px;display:flex;align-items:center;gap:5px;}
-.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px;}
+.settings-grid{display:grid;grid-template-columns:1fr;gap:12px;padding:14px;}@media(min-width:500px){.settings-grid{grid-template-columns:1fr 1fr;}}
 .si{display:flex;flex-direction:column;gap:5px;}
 .si-lbl{font-size:12px;font-weight:700;color:#0d2b1a;}
 .si-hint{font-size:10px;color:#5a7a63;}
@@ -123,7 +123,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f2f5f3;min-height:100vh;d
 .modal-label{font-size:11px;font-weight:700;color:#5a7a63;margin-bottom:5px;display:block;}
 .toast{position:fixed;bottom:24px;right:24px;background:#0d2b1a;color:#fff;font-size:13px;font-weight:500;padding:11px 20px;border-radius:28px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;}
 .toast.show{opacity:1;}
-.nav-btn{flex-shrink:0;padding:12px 14px;border:none;background:none;font-size:13px;font-weight:500;color:#5a7a63;cursor:pointer;font-family:inherit;border-bottom:2.5px solid transparent;white-space:nowrap;display:flex;align-items:center;}
+.nav-btn{flex:1;padding:12px 8px;border:none;background:none;font-size:12px;font-weight:500;color:#5a7a63;cursor:pointer;font-family:inherit;border-bottom:2.5px solid transparent;white-space:nowrap;display:flex;align-items:center;justify-content:center;min-width:52px;}
 .nav-btn:hover{color:#0d2b1a;}
 .nav-btn.active{color:#0d2b1a;font-weight:700;border-bottom-color:#0d2b1a;}
 .u-item{padding:13px 16px;border-bottom:1px solid #f0f5f2;display:flex;align-items:center;gap:12px;}
@@ -151,8 +151,8 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f2f5f3;min-height:100vh;d
   </div>
 </div>
 <!-- 導覽列：在頂部下方，捲動式 -->
-<div style="background:#fff;border-bottom:1px solid #e0ebe5;padding:0 8px;display:flex;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;">
-  <div style="-webkit-scrollbar:none;scrollbar-width:none;display:flex;gap:2px;width:100%;">
+<div style="background:#fff;border-bottom:1px solid #e0ebe5;display:flex;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;" id="nav-bar">
+  <div style="display:flex;gap:0;min-width:100%;">
     <button class="nav-btn active" onclick="goPage('dashboard',this)">📊 總覽</button>
     <button class="nav-btn" onclick="goPage('pending',this)">👥 學員 <span id="pending-badge" style="background:#f59e0b;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:3px;">0</span></button>
     <button class="nav-btn" onclick="goPage('groups',this)">🏷️ 分組</button>
@@ -216,7 +216,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f2f5f3;min-height:100vh;d
     </div>
     <div class="card">
       <div class="card-header"><div class="card-title">尚未分組 (<span id="unassigned-count">0</span> 人)</div></div>
-      <table class="tbl"><thead><tr><th>姓名</th><th>參賽類型</th><th>報名日期</th><th>操作</th></tr></thead><tbody id="unassigned-list"></tbody></table>
+      <div id="unassigned-list"></div>
     </div>
   </div>
 
@@ -531,13 +531,22 @@ function renderUnassignedList(){
   const unassigned=allUsers.filter(u=>u.status==='approved'&&!u.group_id);
   document.getElementById('unassigned-count').textContent=unassigned.length;
   const el=document.getElementById('unassigned-list');
-  if(!unassigned.length){el.innerHTML='<tr><td colspan="4" style="text-align:center;color:#aaa;font-size:12px;padding:16px;">所有學員皆已分組 ✓</td></tr>';return;}
-  el.innerHTML=unassigned.map(u=>`<tr>
-    <td>${u.name}</td>
-    <td><span class="tag ${tagClass(u.contest_type)}">${typeLabel(u.contest_type)}</span></td>
-    <td style="font-size:11px;color:#5a7a63;">${u.created_at?u.created_at.slice(5,10):''}</td>
-    <td><button class="btn btn-green btn-sm" onclick="openAddToGroup('${u.id}','${u.name}')">分配組別</button></td>
-  </tr>`).join('');
+  if(!unassigned.length){
+    el.innerHTML='<div style="text-align:center;color:#aaa;font-size:12px;padding:16px;">所有學員皆已分組 ✓</div>';
+    return;
+  }
+  el.innerHTML=unassigned.map(u=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #f0f5f2;">
+      <div style="width:34px;height:34px;border-radius:50%;background:${avatarColor(u.name)};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;">${u.name.charAt(0)}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:700;color:#0d2b1a;">${u.name}</div>
+        <div style="display:flex;gap:5px;margin-top:3px;flex-wrap:wrap;">
+          <span class="tag ${tagClass(u.contest_type)}">${typeLabel(u.contest_type)}</span>
+          <span style="font-size:10px;color:#5a7a63;">${u.created_at?u.created_at.slice(5,10):''}</span>
+        </div>
+      </div>
+      <button class="btn btn-green btn-sm" onclick="openAddToGroup('${u.id}','${u.name}')" style="flex-shrink:0;">分配組別</button>
+    </div>`).join('');
 }
 
 async function saveGroupName(groupId,val){
