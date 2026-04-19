@@ -342,8 +342,12 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
 </style>
 </head>
 <body>
+<div id="loading-mask" style="position:fixed;inset:0;background:#0d2b1a;display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:12px;">
+  <div style="font-size:36px;">🌿</div>
+  <div style="font-size:13px;color:rgba(255,255,255,.6);">載入中...</div>
+</div>
 <div id="app">
-  <div class="fv on" id="fv-login">
+  <div class="fv" id="fv-login">
     <div class="lv-logo">🌿</div>
     <div class="lv-title">曲線管理比賽</div>
     <div class="lv-sub">此服務僅限報名課程之學員使用。<br>請以 Google 帳號登入，等候老師審核後即可使用。</div>
@@ -723,10 +727,15 @@ const COMMON_FOODS=[
   {n:'麥片（1碗）',c:180,p:5,cr:35,f:3,ic:'🥣'},
 ];
 
-let CU=null,UP=null,ML=[[],[],[],[]],WM=0,CM=0,SP=null,SS=1,MC='全部',MT_='nut',MOOD=3,ET='',ET_MET=0,RD={},RU=[],RG=[],RCO=null;
+let CU=null,UP=null,ML=[[],[],[],[]],WM=0,CM=0,SP=null,SS=1,MC='全部',MT_='nut',MOOD=3,ET='',ET_MET=0,RD={},RU=[],RG=[],RCO=null,ALL_TEAMS=[];
 let LATEST_W=60,PRO_GOAL=72,WATER_GOAL=1800,CAL_LIMIT=1664;
 let savedSections={food:false,water:false,ex:false,sleep:false,mood:false};
 const MN = ['早餐', '午餐', '晚餐', '點心'];
+
+async function loadTeams(){
+  const {data}=await sb.from('teams').select('*').order('name');
+  ALL_TEAMS=data||[];
+}
 
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
@@ -734,12 +743,17 @@ async function init(){
   sb.auth.onAuthStateChange(async(_,s)=>{if(s)await hs(s.user);else sv('login');});
 }
 async function hs(u){
-  CU=u;const {data:p}=await sb.from('users').select('*').eq('auth_id',u.id).maybeSingle();
+  CU=u;
+  await loadTeams();
+  const {data:p}=await sb.from('users').select('*').eq('auth_id',u.id).maybeSingle();
   if(!p){RD.email=u.email;sv('reg');rrs(1);}
   else if(p.status==='approved'){UP=p;sv('app');}
   else sv('pending');
 }
 function sv(v){
+  // 隱藏 loading 遮罩
+  const mask=document.getElementById('loading-mask');
+  if(mask)mask.style.display='none';
   document.querySelectorAll('.fv').forEach(x=>x.classList.remove('on'));
   document.getElementById('main-top').style.display='none';
   document.getElementById('main-pages').style.display='none';
@@ -821,12 +835,14 @@ function goP(n,el){
 function rrs(s){
   ['st1','st2','st3'].forEach((id,i)=>{const e=document.getElementById(id);e.className='step '+(i+1<s?'d':i+1===s?'a':'t');e.textContent=i+1<s?'✓':i+1;});
   const b=document.getElementById('reg-body');
-  if(s===1){b.innerHTML=`
+  if(s===1){
+    const teamOptions=ALL_TEAMS.map(t=>`<option value="${t.id}" ${RD.teamId===t.id?'selected':''}>${t.name}</option>`).join('');
+    b.innerHTML=`
     <div class="fg"><label>姓名</label><input class="fi" id="rn" type="text" placeholder="你的名字" value="${RD.name||''}"></div>
     <div class="fg"><label>電話</label><input class="fi" id="rph" type="tel" placeholder="0912-345-678" value="${RD.phone||''}"></div>
     <div class="fg"><label>性別</label><div class="gr-row"><button class="gb${RD.gender==='female'?' on':''}" onclick="sg('female',this)">女</button><button class="gb${RD.gender==='male'?' on':''}" onclick="sg('male',this)">男</button></div></div>
     <div class="fg2"><div class="fg"><label>年齡</label><input class="fi" id="ra" type="number" placeholder="30" value="${RD.age||''}"></div><div class="fg"><label>身高 cm</label><input class="fi" id="rh" type="number" placeholder="160" value="${RD.height||''}"></div></div>
-    <div class="fg"><label>Email</label><input class="fi" value="${RD.email||''}" readonly style="opacity:.6;"></div>
+    <div class="fg"><label>所屬白金 <span style="color:#ef4444;">*</span></label><select class="fi" id="r-team" style="appearance:auto;"><option value="">-- 請選擇你的白金 --</option>${teamOptions}</select></div>
     <button class="btn-nx" onclick="rn1()">下一步 →</button>`;}
   else if(s===2){b.innerHTML=`
     <div class="nb">⚠️ 初始數值由老師量測填入，作為比賽基準線。未量測可先填 0。</div>
@@ -857,7 +873,9 @@ function rn1(){
   if(!RD.gender){toast('請選擇性別');return;}
   const a=document.getElementById('ra')?.value,h=document.getElementById('rh')?.value;
   if(!a||!h){toast('請填年齡和身高');return;}
-  RD.name=name;RD.phone=document.getElementById('rph')?.value;RD.age=parseInt(a);RD.height=parseFloat(h);rrs(2);
+  const teamId=document.getElementById('r-team')?.value;
+  if(!teamId){toast('請選擇所屬白金');return;}
+  RD.name=name;RD.phone=document.getElementById('rph')?.value;RD.age=parseInt(a);RD.height=parseFloat(h);RD.teamId=teamId;rrs(2);
 }
 function rn2(){
   // 建立一個小工具函數：如果有值就轉換成數字，沒填就回傳 null
@@ -879,9 +897,11 @@ async function subReg(){
   const {error}=await sb.from('users').insert({
     auth_id:CU.id,email:CU.email,name:RD.name,phone:RD.phone,gender:RD.gender,
     age:RD.age,height_cm:RD.height,contest_type:type,
+    target_weight:tWeight,target_fat:tFat,target_waist:tWaist,
+    team_id:RD.teamId||null,
     note:document.getElementById('rnote')?.value||'',status:'pending'
   });
-  if(error){toast('送出失敗');return;}sv('pending');toast('✓ 報名已送出！');
+  if(error){toast('送出失敗：'+error.message);return;}sv('pending');toast('✓ 報名已送出！');
 }
 
 async function loadApp(){
