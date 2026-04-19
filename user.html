@@ -734,7 +734,7 @@ async function init(){
   sb.auth.onAuthStateChange(async(_,s)=>{if(s)await hs(s.user);else sv('login');});
 }
 async function hs(u){
-  CU=u;const {data:p}=await sb.from('users').select('*').eq('auth_id',u.id).single();
+  CU=u;const {data:p}=await sb.from('users').select('*').eq('auth_id',u.id).maybeSingle();
   if(!p){RD.email=u.email;sv('reg');rrs(1);}
   else if(p.status==='approved'){UP=p;sv('app');}
   else sv('pending');
@@ -769,10 +769,8 @@ function isWebView(){
 }
 
 function showOpenInBrowserModal(){
-  const url=window.location.href;
-  // 嘗試用 intent scheme 跳 Chrome（Android）
-  const intentUrl='intent://'+url.replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;end';
-  
+  const url='https://binnu1025.github.io/curve-manager/user.html';
+  const intentUrl='intent://binnu1025.github.io/curve-manager/user.html#Intent;scheme=https;package=com.android.chrome;end';
   const ov=document.createElement('div');
   ov.id='webview-ov';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:20px;';
@@ -781,15 +779,18 @@ function showOpenInBrowserModal(){
       <div style="font-size:32px;text-align:center;margin-bottom:12px;">🌐</div>
       <div style="font-size:17px;font-weight:900;color:#0d2b1a;text-align:center;margin-bottom:8px;">請用瀏覽器開啟</div>
       <div style="font-size:13px;color:#5a7a63;text-align:center;line-height:1.8;margin-bottom:20px;">
-        Google 登入不支援 LINE / FB 內嵌瀏覽器<br>請複製網址，用 <strong>Chrome</strong> 或 <strong>Safari</strong> 開啟
+        Google 登入不支援 LINE / FB 內嵌瀏覽器<br>
+        請複製網址，用 <strong>Chrome</strong> 或 <strong>Safari</strong> 開啟
       </div>
-      <div style="background:#f2f8f5;border-radius:12px;padding:12px 14px;margin-bottom:14px;word-break:break-all;font-size:12px;color:#3ecf8e;font-weight:700;">${url}</div>
-      <button onclick="navigator.clipboard&&navigator.clipboard.writeText('${url}').then(()=>{document.getElementById('copy-tip').style.display='block';})" 
+      <div style="background:#f2f8f5;border-radius:12px;padding:12px 14px;margin-bottom:14px;word-break:break-all;font-size:13px;color:#3ecf8e;font-weight:700;">
+        https://binnu1025.github.io/curve-manager/user.html
+      </div>
+      <button onclick="navigator.clipboard&&navigator.clipboard.writeText('https://binnu1025.github.io/curve-manager/user.html').then(()=>{document.getElementById('copy-tip').style.display='block';})"
         style="width:100%;padding:15px;background:#0d2b1a;color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">
         📋 複製網址
       </button>
       <div id="copy-tip" style="display:none;text-align:center;font-size:12px;color:#3ecf8e;font-weight:700;margin-bottom:8px;">✓ 已複製！請開啟 Chrome 貼上網址</div>
-      <button onclick="window.location.href='${intentUrl}'"
+      <button onclick="window.location.href='intent://binnu1025.github.io/curve-manager/user.html#Intent;scheme=https;package=com.android.chrome;end'"
         style="width:100%;padding:13px;background:#4285f4;color:#fff;border:none;border-radius:13px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">
         🚀 直接用 Chrome 開啟（Android）
       </button>
@@ -802,10 +803,7 @@ function showOpenInBrowserModal(){
 }
 
 document.getElementById('login-btn').onclick=async()=>{
-  if(isWebView()){
-    showOpenInBrowserModal();
-    return;
-  }
+  if(isWebView()){showOpenInBrowserModal();return;}
   await sb.auth.signInWithOAuth({
     provider:'google',
     options:{redirectTo:'https://binnu1025.github.io/curve-manager/user.html'}
@@ -900,8 +898,8 @@ async function loadApp(){
   if(p.contest_type==='individual'||p.contest_type==='both')te.innerHTML+='<span class="ptag pti">個人組</span>';
   if(p.contest_type==='team'||p.contest_type==='both')te.innerHTML+='<span class="ptag ptt">團體組</span>';
   if(p.is_leader) te.innerHTML+='<span class="ptag" style="background:rgba(245,158,11,.3);color:#92400e;">👑 小組長</span>';
-  if(p.group_id){const {data:g}=await sb.from('groups').select('name,emoji').eq('id',p.group_id).single();if(g)document.getElementById('pf-tm').textContent=g.emoji+' '+g.name;}
-  const {data:co}=await sb.from('contests').select('*').eq('is_active',true).single();
+  if(p.group_id){const {data:g}=await sb.from('groups').select('name,emoji').eq('id',p.group_id).maybeSingle();if(g)document.getElementById('pf-tm').textContent=g.emoji+' '+g.name;}
+  const {data:co}=await sb.from('contests').select('*').eq('is_active',true).maybeSingle();
   if(co){
     RCO=co;
     const days=Math.max(1,Math.floor((new Date()-new Date(co.start_date))/86400000)+1);
@@ -910,7 +908,7 @@ async function loadApp(){
     const daysLeft=Math.max(0,Math.ceil((endDate-new Date())/86400000));
     document.getElementById('h-countdown').textContent=daysLeft;
   }
-  const {data:latestM}=await sb.from('home_measurements').select('weight,bodyfat,waist,measured_date').eq('user_id',p.id).order('measured_date',{ascending:false}).limit(1).single();
+  const {data:latestM}=await sb.from('home_measurements').select('weight,bodyfat,waist,measured_date').eq('user_id',p.id).order('measured_date',{ascending:false}).limit(1).maybeSingle();
   if(latestM&&latestM.weight){
     LATEST_W=latestM.weight;
     document.getElementById('h-w').textContent=latestM.weight;
@@ -969,7 +967,7 @@ async function loadStreak(){
 }
 
 async function loadAnnounce(){
-  const {data}=await sb.from('contests').select('*').eq('is_active',true).single();
+  const {data}=await sb.from('contests').select('*').eq('is_active',true).maybeSingle();
   if(data&&data.note){
     document.getElementById('announce-text').textContent=data.note;
     document.getElementById('announce-bar').style.display='flex';
@@ -977,9 +975,9 @@ async function loadAnnounce(){
 }
 
 async function loadTargetProgress(p){
-  const {data:latestM}=await sb.from('home_measurements').select('weight,bodyfat,waist').eq('user_id',p.id).order('measured_date',{ascending:false}).limit(1).single();
+  const {data:latestM}=await sb.from('home_measurements').select('weight,bodyfat,waist').eq('user_id',p.id).order('measured_date',{ascending:false}).limit(1).maybeSingle();
   if(!latestM||!latestM.weight)return;
-  const {data:om}=await sb.from('official_measurements').select('*').eq('user_id',p.id).single();
+  const {data:om}=await sb.from('official_measurements').select('*').eq('user_id',p.id).maybeSingle();
   if(!om||!om.start_locked)return;
   const tpEl=document.getElementById('target-progress');
   const tpContent=document.getElementById('target-progress-content');
@@ -1015,7 +1013,7 @@ async function loadTargetProgress(p){
 }
 
 async function loadOff(){
-  const {data:o}=await sb.from('official_measurements').select('*').eq('user_id',UP.id).single();
+  const {data:o}=await sb.from('official_measurements').select('*').eq('user_id',UP.id).maybeSingle();
   if(!o || !o.start_locked) return;
 
   // 1. 更新首頁頂部的大數字 (顯示最新量測或結賽數值)
@@ -1051,7 +1049,7 @@ async function loadOff(){
 }
 async function loadToday(){
   const td=new Date().toISOString().split('T')[0];
-  const {data:l}=await sb.from('daily_logs').select('*').eq('user_id',UP.id).eq('log_date',td).single();
+  const {data:l}=await sb.from('daily_logs').select('*').eq('user_id',UP.id).eq('log_date',td).maybeSingle();
   if(!l)return;
   WM=l.water_ml||0;document.getElementById('wn').textContent=WM;
   if(l.meals)ML=l.meals;for(let i=0;i<4;i++)rMeal(i);
@@ -1527,7 +1525,7 @@ async function loadAdm(){
   await aLC();await aLU();await aLG();await aLO();
 }
 async function aLC(){
-  const {data}=await sb.from('contests').select('*').eq('is_active',true).single();RCO=data;
+  const {data}=await sb.from('contests').select('*').eq('is_active',true).maybeSingle();RCO=data;
   if(!data)return;const f=id=>document.getElementById(id);
   if(f('adm-sn'))f('adm-sn').value=data.name||'';if(f('adm-ss'))f('adm-ss').value=data.start_date||'';
   if(f('adm-se'))f('adm-se').value=data.end_date||'';if(f('adm-smin'))f('adm-smin').value=data.team_min||2;if(f('adm-smax'))f('adm-smax').value=data.team_max||5;
@@ -1570,7 +1568,7 @@ async function aLU(){
   } // <--- 🌟 就是漏了這個大括號！它是用來關閉 aLU() 的
 async function aUS(uid,status){
   await sb.from('users').update({status}).eq('id',uid);toast(status==='approved'?'✓ 已通過':'✕ 已拒絕');
-  if(status==='approved'){const {data:ex}=await sb.from('official_measurements').select('id').eq('user_id',uid).single();if(!ex)await sb.from('official_measurements').insert({user_id:uid,contest_id:RCO?.id});}
+  if(status==='approved'){const {data:ex}=await sb.from('official_measurements').select('id').eq('user_id',uid).maybeSingle();if(!ex)await sb.from('official_measurements').insert({user_id:uid,contest_id:RCO?.id});}
   await aLU();
 }
 async function aToggleLeader(uid, isLeader, name){
@@ -1721,7 +1719,7 @@ async function loadLeaderView(){
   document.getElementById('leader-history-view').style.display='none';
 
   // 取得組別資訊
-  const {data:grp}=await sb.from('groups').select('name,emoji').eq('id',UP.group_id).single();
+  const {data:grp}=await sb.from('groups').select('name,emoji').eq('id',UP.group_id).maybeSingle();
   if(grp)document.getElementById('leader-group-title').textContent=(grp.emoji||'👥')+' '+grp.name+' — 今日狀況';
 
   // 取得同組學員
