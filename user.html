@@ -1474,25 +1474,45 @@ function psAddCustom(){
 
 // 份數選擇彈窗（自製，不用 prompt）
 function showQtyPicker(name, ic, c, p, cr, f, cb){
+  // 存 callback 到全域，避免 toString() 問題
+  window._psCallback = cb;
+  window._psQty = 1;
+  window._psC = c; window._psP = p;
+  
+  // 移除舊的彈窗
+  document.getElementById('qty-picker-ov')?.remove();
+  
   const steps=[0.5,1,1.5,2,2.5,3];
-  let q=1;
   const ov=document.createElement('div');
+  ov.id='qty-picker-ov';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center;';
+  
+  const btnHtml = steps.map((s,i)=>`
+    <button class="qty-step-btn" data-qty="${s}" onclick="
+      document.querySelectorAll('.qty-step-btn').forEach(b=>{b.style.background='#f2f8f5';b.style.color='#5a7a63';});
+      this.style.background='#0d2b1a';this.style.color='#fff';
+      window._psQty=${s};
+      document.getElementById('qty-preview').textContent=Math.round(${c}*${s})+'大卡・蛋白'+(${p}*${s}).toFixed(1)+'g';
+    " style="padding:12px 0;border-radius:10px;border:1.5px solid #e0ebe5;background:${i===1?'#0d2b1a':'#f2f8f5'};color:${i===1?'#fff':'#5a7a63'};font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">${s}份</button>
+  `).join('');
+  
   ov.innerHTML=`
     <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:430px;padding:20px 20px 32px;">
       <div style="text-align:center;font-size:28px;margin-bottom:6px;">${ic}</div>
       <div style="text-align:center;font-size:15px;font-weight:700;color:#0d2b1a;margin-bottom:16px;">${name}</div>
       <div style="font-size:12px;font-weight:700;color:#5a7a63;margin-bottom:10px;">選擇份數：</div>
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;">
-        ${steps.map((s,i)=>`<button onclick="this.parentElement.querySelectorAll('button').forEach(b=>b.style.background='#f2f8f5');this.parentElement.querySelectorAll('button').forEach(b=>b.style.color='#5a7a63');this.style.background='#0d2b1a';this.style.color='#fff';document.getElementById('qty-preview').textContent='${Math.round(c*s)}大卡・蛋白${(p*s).toFixed(1)}g';window._psQty=${s};" style="padding:12px 0;border-radius:10px;border:1.5px solid #e0ebe5;background:${i===1?'#0d2b1a':'#f2f8f5'};color:${i===1?'#fff':'#5a7a63'};font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">${s}份</button>`).join('')}
-      </div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;">${btnHtml}</div>
       <div id="qty-preview" style="text-align:center;font-size:14px;color:#3ecf8e;font-weight:700;background:#0d2b1a;padding:10px;border-radius:12px;margin-bottom:16px;">${Math.round(c)}大卡・蛋白${p.toFixed(1)}g</div>
       <div style="display:flex;gap:10px;">
-        <button onclick="this.closest('div[style]').remove()" style="flex:1;padding:14px;background:#fff;border:1.5px solid #e0ebe5;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#5a7a63;">取消</button>
-        <button onclick="const q=window._psQty||1;this.closest('div[style]').remove();(${cb.toString()})(q);" style="flex:2;padding:14px;background:#3ecf8e;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#0d2b1a;">✓ 加入套餐</button>
+        <button onclick="document.getElementById('qty-picker-ov').remove();window._psCallback=null;" 
+          style="flex:1;padding:14px;background:#fff;border:1.5px solid #e0ebe5;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#5a7a63;">取消</button>
+        <button onclick="
+          const q=window._psQty||1;
+          document.getElementById('qty-picker-ov').remove();
+          if(window._psCallback){window._psCallback(q);window._psCallback=null;}
+        " style="flex:2;padding:14px;background:#3ecf8e;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#0d2b1a;">✓ 加入套餐</button>
       </div>
     </div>`;
-  window._psQty=1;
   document.body.appendChild(ov);
 }
 
@@ -1585,18 +1605,67 @@ function selPreset(i){
 
 function cfPreset(){
   if(PS===null||!MY_PRESETS[PS])return;
-  const items=MY_PRESETS[PS].items||[];
-  items.forEach(x=>ML[CM].push({...x}));
-  closeMo();rMeal(CM);
-  toast(`✓ 已帶入「${MY_PRESETS[PS].name}」（${items.length}樣食物）`);
-  PS=null;
+  const preset=MY_PRESETS[PS];
+  const items=preset.items||[];
+  
+  // 顯示選擇餐別的彈窗
+  const MN_ICONS=['🌅','☀️','🌙','🍎'];
+  const ov=document.createElement('div');
+  ov.id='meal-sel-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center;';
+  ov.innerHTML=`
+    <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:430px;padding:20px 20px 32px;">
+      <div style="text-align:center;font-size:15px;font-weight:700;color:#0d2b1a;margin-bottom:6px;">「${preset.name}」加入哪一餐？</div>
+      <div style="font-size:12px;color:#5a7a63;text-align:center;margin-bottom:16px;">${items.length}樣食物 · ${Math.round(items.reduce((s,x)=>s+x.c,0))}大卡</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        ${MN.map((name,i)=>`
+          <button onclick="
+            ML[${i}]=[...ML[${i}],...${JSON.stringify(items)}];
+            document.getElementById('meal-sel-ov').remove();
+            closeMo();
+            for(let j=0;j<4;j++)rMeal(j);
+            toast('✓ 已帶入${preset.name}到${MN_ICONS[i]}'+MN[${i}]);
+            PS=null;
+          " style="padding:16px;background:#f2f8f5;border:1.5px solid #e0ebe5;border-radius:14px;font-size:15px;font-weight:700;color:#0d2b1a;cursor:pointer;font-family:inherit;">
+            ${MN_ICONS[i]} ${name}
+          </button>`).join('')}
+      </div>
+      <button onclick="document.getElementById('meal-sel-ov').remove();" 
+        style="width:100%;padding:13px;background:#fff;border:1.5px solid #e0ebe5;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;color:#5a7a63;">取消</button>
+    </div>`;
+  document.body.appendChild(ov);
 }
 
 async function deletePreset(id,name){
-  if(!confirm(`確定刪除套餐「${name}」？`))return;
-  await sb.from('meal_presets').delete().eq('id',id);
-  toast('✓ 已刪除套餐');
-  await loadPresets();
+  showConfirm(`🗑️ 刪除套餐`,`確定要刪除「${name}」？`,async()=>{
+    await sb.from('meal_presets').delete().eq('id',id);
+    toast('✓ 已刪除套餐');
+    await loadPresets();
+  });
+}
+
+// ---------------- 通用確認彈窗 ----------------
+function showConfirm(title, msg, onConfirm, confirmText='確定刪除', confirmColor='#ef4444'){
+  document.getElementById('confirm-ov')?.remove();
+  const ov=document.createElement('div');
+  ov.id='confirm-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:flex;align-items:center;justify-content:center;padding:24px;';
+  ov.innerHTML=`
+    <div style="background:#fff;border-radius:20px;padding:24px;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.15);">
+      <div style="font-size:16px;font-weight:700;color:#0d2b1a;margin-bottom:8px;">${title}</div>
+      <div style="font-size:13px;color:#5a7a63;line-height:1.6;margin-bottom:20px;">${msg}</div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="document.getElementById('confirm-ov').remove();"
+          style="flex:1;padding:13px;background:#fff;border:1.5px solid #e0ebe5;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#5a7a63;">取消</button>
+        <button id="confirm-ok-btn"
+          style="flex:1;padding:13px;background:${confirmColor};border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;">${confirmText}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  document.getElementById('confirm-ok-btn').onclick=()=>{
+    document.getElementById('confirm-ov').remove();
+    onConfirm();
+  };
 }
 
 // ---------------- 儲存與其他邏輯 ----------------
