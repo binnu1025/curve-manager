@@ -461,6 +461,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
         <div class="mb"><div class="mb-hd"><div class="mb-lf"><div style="font-size:18px;">☀️</div><div><div class="mb-nm">午餐</div><div class="mb-kc" id="mk1">0 大卡</div></div></div><button class="mb-add" onclick="openModal(1)">+</button></div><div class="mi-list" id="ml1"><div class="em">點「+」新增</div></div></div>
         <div class="mb"><div class="mb-hd"><div class="mb-lf"><div style="font-size:18px;">🌙</div><div><div class="mb-nm">晚餐</div><div class="mb-kc" id="mk2">0 大卡</div></div></div><button class="mb-add" onclick="openModal(2)">+</button></div><div class="mi-list" id="ml2"><div class="em">點「+」新增</div></div></div>
         <div class="mb"><div class="mb-hd"><div class="mb-lf"><div style="font-size:18px;">🍎</div><div><div class="mb-nm">點心</div><div class="mb-kc" id="mk3">0 大卡</div></div></div><button class="mb-add" onclick="openModal(3)">+</button></div><div class="mi-list" id="ml3"><div class="em">點「+」新增</div></div></div>
+        <button onclick="saveAsPreset()" style="width:100%;padding:12px;background:#fff;border:1.5px solid #c8e0d0;border-radius:12px;font-size:13px;font-weight:700;color:#0d2b1a;cursor:pointer;font-family:inherit;margin-top:10px;">⭐ 儲存今日所有食物為套餐</button>
         <button class="confirm-btn" id="food-btn" onclick="saveSection('food')">💾 儲存飲食紀錄</button>
         <div class="sv-st" id="food-st"></div>
       </div>
@@ -727,7 +728,7 @@ const COMMON_FOODS=[
   {n:'麥片（1碗）',c:180,p:5,cr:35,f:3,ic:'🥣'},
 ];
 
-let CU=null,UP=null,ML=[[],[],[],[]],WM=0,CM=0,SP=null,SS=1,MC='全部',MT_='nut',MOOD=3,ET='',ET_MET=0,RD={},RU=[],RG=[],RCO=null,ALL_TEAMS=[];
+let CU=null,UP=null,ML=[[],[],[],[]],WM=0,CM=0,SP=null,SS=1,MC='全部',MT_='nut',MOOD=3,ET='',ET_MET=0,RD={},RU=[],RG=[],RCO=null,ALL_TEAMS=[],PS=null,MY_PRESETS=[];
 let LATEST_W=60,PRO_GOAL=72,WATER_GOAL=1800,CAL_LIMIT=1664;
 let savedSections={food:false,water:false,ex:false,sleep:false,mood:false};
 const MN = ['早餐', '午餐', '晚餐', '點心'];
@@ -1295,6 +1296,7 @@ function rMI(){
   const cc=c=>({優質蛋白素:'cpp',BodyKey:'cpb',XS:'cpx'})[c]||'';
   document.getElementById('mi').innerHTML=`
     <div class="mtt">
+      <button class="mtb${MT_==='preset'?' on':''}" onclick="sMT('preset')">⭐ 我的套餐</button>
       <button class="mtb${MT_==='nut'?' on':''}" onclick="sMT('nut')">🌿 紐崔萊</button>
       <button class="mtb${MT_==='common'?' on':''}" onclick="sMT('common')">🥡 常見外食</button>
       <button class="mtb${MT_==='custom'?' on':''}" onclick="sMT('custom')">✏️ 自行輸入</button>
@@ -1318,9 +1320,16 @@ function rMI(){
         <div class="c2"><div><label>脂肪 g</label><input class="ci" id="cf2" type="number" placeholder="0"></div><div></div></div>
       </div>
       <button class="mc on" onclick="cfCustom()">確認加入</button>
+    </div>
+    <div id="mp-preset" style="display:${MT_==='preset'?'flex':'none'};flex-direction:column;flex:1;overflow:hidden;">
+      <div class="m-list" id="preset-list"><div style="text-align:center;padding:24px;color:#bbb;font-size:13px;">載入中...</div></div>
+      <button class="mc" id="preset-confirm-btn" onclick="cfPreset()" style="background:#ccc;color:#fff;">請先選擇套餐</button>
     </div>`;
 }
-function sMT(t){MT_=t;SP=null;rMI();}
+function sMT(t){
+  MT_=t;SP=null;PS=null;rMI();
+  if(t==='preset') loadPresets();
+}
 function sMC(c){MC=c;rMI();}
 function sP(i){SP=i;SS=1;rMI();}
 function sSS(i){SS=i;rMI();}
@@ -1355,6 +1364,93 @@ function cfCustom(){
     qty: 1, base: {c, p, cr, f}
   });
   closeMo();rMeal(CM);
+}
+
+// ---------------- 套餐功能 ----------------
+
+async function loadPresets(){
+  if(!UP)return;
+  const el=document.getElementById('preset-list');
+  if(el)el.innerHTML='<div style="text-align:center;padding:24px;color:#bbb;font-size:13px;">載入中...</div>';
+  const {data}=await sb.from('meal_presets').select('*').eq('user_id',UP.id).order('created_at',{ascending:false});
+  MY_PRESETS=data||[];
+  renderPresets();
+}
+
+function renderPresets(){
+  const el=document.getElementById('preset-list');if(!el)return;
+  if(!MY_PRESETS.length){
+    el.innerHTML=`<div style="text-align:center;padding:24px;">
+      <div style="font-size:36px;margin-bottom:12px;">⭐</div>
+      <div style="font-size:13px;color:#5a7a63;line-height:1.7;">還沒有自創套餐<br>先在各食物清單選好食物<br>再點「儲存為我的套餐」</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML=MY_PRESETS.map((p,i)=>{
+    const items=p.items||[];
+    const cal=items.reduce((s,x)=>s+x.c,0);
+    const pro=items.reduce((s,x)=>s+x.p,0);
+    const ck=PS===i;
+    return`<div class="mp" onclick="selPreset(${i})" style="${ck?'background:#f0fdf8;':''};flex-direction:column;align-items:flex-start;gap:6px;">
+      <div style="display:flex;align-items:center;width:100%;gap:10px;">
+        <div style="font-size:20px;">⭐</div>
+        <div style="flex:1;">
+          <div class="mp-nm">${p.name}</div>
+          <div class="mp-mc">${Math.round(cal)}大卡 · 蛋白${pro.toFixed(1)}g · ${items.length}樣食物</div>
+        </div>
+        <div class="mp-ck${ck?' on':''}">${ck?'✓':''}</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;padding-left:30px;">
+        ${items.map(x=>`<span style="font-size:10px;background:#f2f8f5;border-radius:6px;padding:2px 7px;color:#5a7a63;">${x.ic||'🍽️'} ${x.n}</span>`).join('')}
+      </div>
+      <button onclick="event.stopPropagation();deletePreset('${p.id}','${p.name}')" style="align-self:flex-end;padding:4px 10px;background:none;border:1px solid #fca5a5;border-radius:8px;font-size:11px;color:#ef4444;cursor:pointer;font-family:inherit;">刪除</button>
+    </div>`;
+  }).join('');
+}
+
+function selPreset(i){
+  PS=i;
+  renderPresets();
+  const btn=document.getElementById('preset-confirm-btn');
+  if(btn){btn.textContent=`✓ 帶入「${MY_PRESETS[i].name}」`;btn.style.background='#3ecf8e';btn.style.color='#0d2b1a';}
+}
+
+function cfPreset(){
+  if(PS===null||!MY_PRESETS[PS])return;
+  const items=MY_PRESETS[PS].items||[];
+  items.forEach(x=>ML[CM].push({...x}));
+  closeMo();rMeal(CM);
+  toast(`✓ 已帶入「${MY_PRESETS[PS].name}」（${items.length}樣食物）`);
+  PS=null;
+}
+
+async function deletePreset(id,name){
+  if(!confirm(`確定刪除套餐「${name}」？`))return;
+  await sb.from('meal_presets').delete().eq('id',id);
+  toast('✓ 已刪除套餐');
+  await loadPresets();
+}
+
+// 儲存目前選好的食物為套餐
+async function saveAsPreset(mealIdx){
+  if(!UP)return;
+  // 收集目前已選的所有食物（可指定餐別，或收集全部）
+  let items=[];
+  if(mealIdx!==undefined){
+    items=ML[mealIdx];
+  } else {
+    ML.forEach(m=>items=items.concat(m));
+  }
+  if(!items.length){toast('請先選擇食物再儲存套餐');return;}
+  const name=prompt('為這個套餐命名：');
+  if(!name||!name.trim())return;
+  const {error}=await sb.from('meal_presets').insert({
+    user_id:UP.id,
+    name:name.trim(),
+    items:items.map(x=>({n:x.n,ic:x.ic||'🍽️',c:x.c,p:x.p,cr:x.cr||0,f:x.f||0,qty:x.qty||1,base:x.base}))
+  });
+  if(error){toast('儲存失敗：'+error.message);return;}
+  toast(`✓ 套餐「${name}」已儲存！`);
 }
 
 // ---------------- 儲存與其他邏輯 ----------------
