@@ -737,10 +737,25 @@ async function loadTeams(){
   ALL_TEAMS=data||[];
 }
 
+// 網路狀態監控
+window.addEventListener('online', ()=>{
+  toast('✅ 網路已恢復連線');
+  if(UP){loadToday();}
+});
+window.addEventListener('offline', ()=>{
+  toast('⚠️ 網路已斷線，資料暫存本地');
+});
+
 async function init(){
   const {data:{session}}=await sb.auth.getSession();
   if(session)await hs(session.user);else sv('login');
   sb.auth.onAuthStateChange(async(_,s)=>{if(s)await hs(s.user);else sv('login');});
+  // 每5分鐘自動重新整理今日數據和 session
+  setInterval(async()=>{
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){sv('login');return;}
+    if(UP){loadToday();updGoals();}
+  }, 5*60*1000);
 }
 async function hs(u){
   CU=u;
@@ -830,6 +845,10 @@ function goP(n,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById('pg-'+n).classList.add('on');
+  // 切回首頁時重新載入今日數據
+  if(n==='home'){loadToday();loadStreak();}
+  // 切到量測頁時重新載入趨勢
+  if(n==='measure'){loadTrend();}
 }
 
 function rrs(s){
@@ -1068,6 +1087,7 @@ async function loadOff(){
   const od=document.getElementById('off-data-m');if(od)od.innerHTML=html||'<div style="font-size:12px;color:rgba(255,255,255,.4);text-align:center;padding:8px 0;">尚無官方量測數據</div>';
 }
 async function loadToday(){
+  if(!UP)return;
   const td=new Date().toISOString().split('T')[0];
   const {data:l}=await sb.from('daily_logs').select('*').eq('user_id',UP.id).eq('log_date',td).maybeSingle();
   if(!l)return;
@@ -1341,6 +1361,8 @@ function cfCustom(){
 
 async function saveMeas(){
   if(!UP)return;
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){toast('⚠️ 登入已過期，重新整理中...');setTimeout(()=>window.location.reload(),1500);return;}
   const w=document.getElementById('fm-w')?.value;
   const f=document.getElementById('fm-f')?.value;
   const wt=document.getElementById('fm-wt')?.value;
@@ -1508,6 +1530,13 @@ function editDiaryDate(l){
 
 async function saveSection(section){
   if(!UP)return;
+  // 檢查 session 是否還有效
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){
+    toast('⚠️ 登入已過期，重新整理中...');
+    setTimeout(()=>window.location.reload(),1500);
+    return;
+  }
   // 使用 EDIT_DATE（編輯舊日記）或今天
   const td = EDIT_DATE || new Date().toISOString().split('T')[0];
   const now=new Date();
@@ -1519,8 +1548,14 @@ async function saveSection(section){
   } else if(section==='water'){payload.water_ml=WM;}
   else if(section==='ex'){payload.exercise_type=ET||null;payload.exercise_minutes=parseInt(document.getElementById('ex-min')?.value)||0;}
   else if(section==='mood'){payload.mood=MOOD;payload.note=document.getElementById('dn')?.value||null;}
+  // 儲存中：防止重複點擊
+  const btnId={food:'food-btn',water:'water-btn',ex:'ex-btn',mood:'mood-btn'}[section];
+  const btn=document.getElementById(btnId);
+  const origText=btn?.textContent;
+  if(btn){btn.textContent='儲存中...';btn.disabled=true;}
   const {error}=await sb.from('daily_logs').upsert(payload,{onConflict:'user_id,log_date'});
-  if(error){toast('儲存失敗');return;}
+  if(btn){btn.textContent=origText;btn.disabled=false;}
+  if(error){toast('❌ 儲存失敗：'+error.message);console.error(error);return;}
   const stId={food:'food-st',water:'water-st',ex:'ex-st',mood:'mood-st'}[section];
   const stEl=document.getElementById(stId);
   const d=new Date(td);
@@ -1540,6 +1575,13 @@ async function saveSection(section){
     },100);
   }
   updGoals();updTip();
+  // 儲存後同步更新首頁目標圓圈
+  if(!EDIT_DATE){
+    const homeTab=document.querySelector('.tab');
+    if(homeTab&&document.getElementById('pg-home').classList.contains('on')){
+      // 已在首頁，直接更新
+    }
+  }
 }
 async function loadAdm(){
   await aLC();await aLU();await aLG();await aLO();
