@@ -349,7 +349,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
 <div id="app">
   <div class="fv" id="fv-login">
     <div class="lv-logo">🌿</div>
-    <div class="lv-title">曲線管理比賽</div>
+    <div class="lv-title">🌿 曲線管理比賽</div>
     <div class="lv-sub">此服務僅限報名課程之學員使用。<br>請以 Google 帳號登入，等候老師審核後即可使用。</div>
     <button class="google-btn" id="login-btn">
       <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
@@ -461,7 +461,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:#0d2b1a;display:flex;justi
         <div class="mb"><div class="mb-hd"><div class="mb-lf"><div style="font-size:18px;">☀️</div><div><div class="mb-nm">午餐</div><div class="mb-kc" id="mk1">0 大卡</div></div></div><button class="mb-add" onclick="openModal(1)">+</button></div><div class="mi-list" id="ml1"><div class="em">點「+」新增</div></div></div>
         <div class="mb"><div class="mb-hd"><div class="mb-lf"><div style="font-size:18px;">🌙</div><div><div class="mb-nm">晚餐</div><div class="mb-kc" id="mk2">0 大卡</div></div></div><button class="mb-add" onclick="openModal(2)">+</button></div><div class="mi-list" id="ml2"><div class="em">點「+」新增</div></div></div>
         <div class="mb"><div class="mb-hd"><div class="mb-lf"><div style="font-size:18px;">🍎</div><div><div class="mb-nm">點心</div><div class="mb-kc" id="mk3">0 大卡</div></div></div><button class="mb-add" onclick="openModal(3)">+</button></div><div class="mi-list" id="ml3"><div class="em">點「+」新增</div></div></div>
-        <button onclick="saveAsPreset()" style="width:100%;padding:12px;background:#fff;border:1.5px solid #c8e0d0;border-radius:12px;font-size:13px;font-weight:700;color:#0d2b1a;cursor:pointer;font-family:inherit;margin-top:10px;">⭐ 儲存今日所有食物為套餐</button>
         <button class="confirm-btn" id="food-btn" onclick="saveSection('food')">💾 儲存飲食紀錄</button>
         <div class="sv-st" id="food-st"></div>
       </div>
@@ -1322,13 +1321,61 @@ function rMI(){
       <button class="mc on" onclick="cfCustom()">確認加入</button>
     </div>
     <div id="mp-preset" style="display:${MT_==='preset'?'flex':'none'};flex-direction:column;flex:1;overflow:hidden;">
-      <div class="m-list" id="preset-list"><div style="text-align:center;padding:24px;color:#bbb;font-size:13px;">載入中...</div></div>
-      <button class="mc" id="preset-confirm-btn" onclick="cfPreset()" style="background:#ccc;color:#fff;">請先選擇套餐</button>
+      <!-- 子 tab：使用 / 建立 -->
+      <div style="display:flex;border-bottom:1px solid #e0ebe5;flex-shrink:0;">
+        <button id="ps-tab-use" onclick="setPSTab('use')" style="flex:1;padding:12px;border:none;background:none;font-size:13px;font-weight:700;color:#0d2b1a;cursor:pointer;font-family:inherit;border-bottom:2.5px solid #0d2b1a;">⭐ 使用套餐</button>
+        <button id="ps-tab-new" onclick="setPSTab('new')" style="flex:1;padding:12px;border:none;background:none;font-size:13px;font-weight:500;color:#5a7a63;cursor:pointer;font-family:inherit;border-bottom:2.5px solid transparent;">＋ 建立套餐</button>
+      </div>
+      <!-- 使用套餐 -->
+      <div id="ps-use" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+        <div class="m-list" id="preset-list"><div style="text-align:center;padding:24px;color:#bbb;font-size:13px;">載入中...</div></div>
+        <button class="mc" id="preset-confirm-btn" onclick="cfPreset()" style="background:#ccc;color:#fff;">請先選擇套餐</button>
+      </div>
+      <!-- 建立套餐 -->
+      <div id="ps-new" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
+        <!-- 已選清單 -->
+        <div style="padding:10px 16px 6px;font-size:12px;font-weight:700;color:#5a7a63;flex-shrink:0;">已選食物 <span id="ps-item-count" style="color:#3ecf8e;">0 樣</span></div>
+        <div id="ps-selected-list" style="padding:0 16px;flex-shrink:0;max-height:140px;overflow-y:auto;"></div>
+        <!-- 選擇區 -->
+        <div style="display:flex;background:#e8f0ec;border-radius:16px;padding:3px;margin:8px 16px;flex-shrink:0;">
+          <button id="psn-tab-nut" onclick="setPSNTab('nut')" style="flex:1;padding:8px 4px;border:none;background:#0d2b1a;color:#fff;border-radius:13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">🌿 紐崔萊</button>
+          <button id="psn-tab-common" onclick="setPSNTab('common')" style="flex:1;padding:8px 4px;border:none;background:none;color:#5a7a63;border-radius:13px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;">🥡 外食</button>
+          <button id="psn-tab-custom" onclick="setPSNTab('custom')" style="flex:1;padding:8px 4px;border:none;background:none;color:#5a7a63;border-radius:13px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;">✏️ 自訂</button>
+        </div>
+        <!-- 紐崔萊清單 -->
+        <div id="psn-nut" class="m-list" style="flex:1;overflow-y:auto;">
+          ${PRODS.map((p,i)=>`<div class="mp" onclick="psAddNut(${i})"><div class="mp-ic">${p.ic}</div><div class="mp-inf"><div class="mp-nm">${p.n}</div><div class="mp-mc">${p.s} · ${p.c}大卡 · 蛋白${p.p}g</div></div><div style="font-size:22px;color:#3ecf8e;font-weight:700;">+</div></div>`).join('')}
+        </div>
+        <!-- 外食清單 -->
+        <div id="psn-common" class="m-list" style="display:none;flex:1;overflow-y:auto;">
+          ${COMMON_FOODS.map((f,i)=>`<div class="mp" onclick="psAddCF(${i})"><div class="mp-ic">${f.ic}</div><div class="mp-inf"><div class="mp-nm">${f.n}</div><div class="mp-mc">${f.c}大卡 · 蛋白${f.p}g</div></div><div style="font-size:22px;color:#3ecf8e;font-weight:700;">+</div></div>`).join('')}
+        </div>
+        <!-- 自訂 -->
+        <div id="psn-custom" style="display:none;padding:12px 16px;flex-shrink:0;">
+          <input id="psn-name" class="ci" type="text" placeholder="食物名稱" style="margin-bottom:8px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <input id="psn-cal" class="ci" type="number" placeholder="熱量 大卡" style="margin-bottom:0;">
+            <input id="psn-pro" class="ci" type="number" placeholder="蛋白質 g" style="margin-bottom:0;">
+          </div>
+          <button onclick="psAddCustom()" class="mc on" style="margin:0;width:100%;padding:12px;">加入清單</button>
+        </div>
+        <!-- 儲存套餐 -->
+        <div style="padding:12px 16px;flex-shrink:0;border-top:1px solid #e0ebe5;">
+          <input id="ps-preset-name" class="ci" type="text" placeholder="套餐名稱（例：營養早餐）" style="margin-bottom:8px;">
+          <button onclick="savePresetNew()" class="mc on" style="margin:0;width:100%;padding:13px;font-size:14px;">⭐ 儲存套餐</button>
+        </div>
+      </div>
     </div>`;
 }
 function sMT(t){
-  MT_=t;SP=null;PS=null;rMI();
-  if(t==='preset') loadPresets();
+  MT_=t;SP=null;PS=null;PS_ITEMS=[];rMI();
+  if(t==='preset'){
+    loadPresets();
+    setTimeout(()=>{
+      renderPSSelected();
+      setPSNTab('nut');
+    },50);
+  }
 }
 function sMC(c){MC=c;rMI();}
 function sP(i){SP=i;SS=1;rMI();}
@@ -1368,6 +1415,127 @@ function cfCustom(){
 
 // ---------------- 套餐功能 ----------------
 
+// ── 套餐：子 tab 切換 ──
+let PS_TAB='use', PSN_TAB='nut', PS_ITEMS=[];
+
+function setPSTab(t){
+  PS_TAB=t;
+  document.getElementById('ps-use').style.display=t==='use'?'flex':'none';
+  document.getElementById('ps-new').style.display=t==='new'?'flex':'none';
+  const u=document.getElementById('ps-tab-use');
+  const n=document.getElementById('ps-tab-new');
+  if(u){u.style.borderBottomColor=t==='use'?'#0d2b1a':'transparent';u.style.fontWeight=t==='use'?'700':'500';u.style.color=t==='use'?'#0d2b1a':'#5a7a63';}
+  if(n){n.style.borderBottomColor=t==='new'?'#0d2b1a':'transparent';n.style.fontWeight=t==='new'?'700':'500';n.style.color=t==='new'?'#0d2b1a':'#5a7a63';}
+  if(t==='use')loadPresets();
+}
+
+function setPSNTab(t){
+  PSN_TAB=t;
+  ['nut','common','custom'].forEach(x=>{
+    const el=document.getElementById('psn-'+x);
+    if(el)el.style.display=x===t?(x==='custom'?'block':'block'):'none';
+  });
+  ['nut','common','custom'].forEach(x=>{
+    const btn=document.getElementById('psn-tab-'+x);
+    if(btn){btn.style.background=x===t?'#0d2b1a':'none';btn.style.color=x===t?'#fff':'#5a7a63';btn.style.fontWeight=x===t?'700':'500';}
+  });
+}
+
+function psAddNut(i){
+  const p=PRODS[i];
+  // 顯示份數選擇彈窗
+  showQtyPicker(p.n, p.ic, p.c, p.p, p.cr||0, p.f||0, (qty)=>{
+    PS_ITEMS.push({n:p.n,ic:p.ic,c:+(p.c*qty).toFixed(1),p:+(p.p*qty).toFixed(1),cr:+(p.cr*qty).toFixed(1),f:+(p.f*qty).toFixed(1),qty,base:{c:p.c,p:p.p,cr:p.cr,f:p.f}});
+    renderPSSelected();
+  });
+}
+
+function psAddCF(i){
+  const f=COMMON_FOODS[i];
+  showQtyPicker(f.n, f.ic, f.c, f.p, f.cr||0, f.f||0, (qty)=>{
+    PS_ITEMS.push({n:f.n,ic:f.ic,c:+(f.c*qty).toFixed(1),p:+(f.p*qty).toFixed(1),cr:+(f.cr*qty).toFixed(1),f:+(f.f*qty).toFixed(1),qty,base:{c:f.c,p:f.p,cr:f.cr,f:f.f}});
+    renderPSSelected();
+  });
+}
+
+function psAddCustom(){
+  const name=document.getElementById('psn-name')?.value.trim();
+  const cal=parseFloat(document.getElementById('psn-cal')?.value)||0;
+  const pro=parseFloat(document.getElementById('psn-pro')?.value)||0;
+  if(!name){toast('請填入食物名稱');return;}
+  if(!cal){toast('請填入熱量');return;}
+  PS_ITEMS.push({n:name,ic:'🍽️',c:cal,p:pro,cr:0,f:0,qty:1,base:{c:cal,p:pro,cr:0,f:0}});
+  document.getElementById('psn-name').value='';
+  document.getElementById('psn-cal').value='';
+  document.getElementById('psn-pro').value='';
+  renderPSSelected();
+  toast('✓ 已加入清單');
+}
+
+// 份數選擇彈窗（自製，不用 prompt）
+function showQtyPicker(name, ic, c, p, cr, f, cb){
+  const steps=[0.5,1,1.5,2,2.5,3];
+  let q=1;
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center;';
+  ov.innerHTML=`
+    <div style="background:#fff;border-radius:24px 24px 0 0;width:100%;max-width:430px;padding:20px 20px 32px;">
+      <div style="text-align:center;font-size:28px;margin-bottom:6px;">${ic}</div>
+      <div style="text-align:center;font-size:15px;font-weight:700;color:#0d2b1a;margin-bottom:16px;">${name}</div>
+      <div style="font-size:12px;font-weight:700;color:#5a7a63;margin-bottom:10px;">選擇份數：</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;">
+        ${steps.map((s,i)=>`<button onclick="this.parentElement.querySelectorAll('button').forEach(b=>b.style.background='#f2f8f5');this.parentElement.querySelectorAll('button').forEach(b=>b.style.color='#5a7a63');this.style.background='#0d2b1a';this.style.color='#fff';document.getElementById('qty-preview').textContent='${Math.round(c*s)}大卡・蛋白${(p*s).toFixed(1)}g';window._psQty=${s};" style="padding:12px 0;border-radius:10px;border:1.5px solid #e0ebe5;background:${i===1?'#0d2b1a':'#f2f8f5'};color:${i===1?'#fff':'#5a7a63'};font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">${s}份</button>`).join('')}
+      </div>
+      <div id="qty-preview" style="text-align:center;font-size:14px;color:#3ecf8e;font-weight:700;background:#0d2b1a;padding:10px;border-radius:12px;margin-bottom:16px;">${Math.round(c)}大卡・蛋白${p.toFixed(1)}g</div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="this.closest('div[style]').remove()" style="flex:1;padding:14px;background:#fff;border:1.5px solid #e0ebe5;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#5a7a63;">取消</button>
+        <button onclick="const q=window._psQty||1;this.closest('div[style]').remove();(${cb.toString()})(q);" style="flex:2;padding:14px;background:#3ecf8e;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#0d2b1a;">✓ 加入套餐</button>
+      </div>
+    </div>`;
+  window._psQty=1;
+  document.body.appendChild(ov);
+}
+
+function renderPSSelected(){
+  const el=document.getElementById('ps-selected-list');
+  const count=document.getElementById('ps-item-count');
+  if(count)count.textContent=PS_ITEMS.length+' 樣';
+  if(!el)return;
+  if(!PS_ITEMS.length){
+    el.innerHTML='<div style="font-size:12px;color:#bbb;padding:8px 0;text-align:center;">尚未加入食物</div>';
+    return;
+  }
+  const cal=PS_ITEMS.reduce((s,x)=>s+x.c,0);
+  const pro=PS_ITEMS.reduce((s,x)=>s+x.p,0);
+  el.innerHTML=`
+    <div style="background:#f2f8f5;border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:11px;color:#0d2b1a;font-weight:700;">共 ${Math.round(cal)} 大卡 · 蛋白 ${pro.toFixed(1)}g</div>
+    ${PS_ITEMS.map((x,i)=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f5f2;">
+        <span style="font-size:16px;">${x.ic}</span>
+        <span style="flex:1;font-size:12px;color:#0d2b1a;">${x.n} <span style="color:#5a7a63;">${x.qty}份</span></span>
+        <span style="font-size:11px;color:#5a7a63;">${Math.round(x.c)}大卡</span>
+        <button onclick="PS_ITEMS.splice(${i},1);renderPSSelected();" style="border:none;background:none;color:#ef4444;cursor:pointer;font-size:16px;padding:2px 6px;">✕</button>
+      </div>`).join('')}`;
+}
+
+async function savePresetNew(){
+  if(!UP)return;
+  if(!PS_ITEMS.length){toast('請先加入食物');return;}
+  const name=document.getElementById('ps-preset-name')?.value.trim();
+  if(!name){toast('請填入套餐名稱');return;}
+  const {error}=await sb.from('meal_presets').insert({
+    user_id:UP.id,
+    name,
+    items:PS_ITEMS.map(x=>({n:x.n,ic:x.ic,c:x.c,p:x.p,cr:x.cr||0,f:x.f||0,qty:x.qty||1,base:x.base}))
+  });
+  if(error){toast('儲存失敗：'+error.message);return;}
+  toast(`✓ 套餐「${name}」已儲存！`);
+  PS_ITEMS=[];
+  document.getElementById('ps-preset-name').value='';
+  renderPSSelected();
+  setPSTab('use');
+}
+
 async function loadPresets(){
   if(!UP)return;
   const el=document.getElementById('preset-list');
@@ -1382,7 +1550,7 @@ function renderPresets(){
   if(!MY_PRESETS.length){
     el.innerHTML=`<div style="text-align:center;padding:24px;">
       <div style="font-size:36px;margin-bottom:12px;">⭐</div>
-      <div style="font-size:13px;color:#5a7a63;line-height:1.7;">還沒有自創套餐<br>先在各食物清單選好食物<br>再點「儲存為我的套餐」</div>
+      <div style="font-size:13px;color:#5a7a63;line-height:1.7;">還沒有套餐<br>點「＋ 建立套餐」自由搭配</div>
     </div>`;
     return;
   }
@@ -1396,14 +1564,14 @@ function renderPresets(){
         <div style="font-size:20px;">⭐</div>
         <div style="flex:1;">
           <div class="mp-nm">${p.name}</div>
-          <div class="mp-mc">${Math.round(cal)}大卡 · 蛋白${pro.toFixed(1)}g · ${items.length}樣食物</div>
+          <div class="mp-mc">${Math.round(cal)}大卡 · 蛋白${pro.toFixed(1)}g · ${items.length}樣</div>
         </div>
         <div class="mp-ck${ck?' on':''}">${ck?'✓':''}</div>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:4px;padding-left:30px;">
-        ${items.map(x=>`<span style="font-size:10px;background:#f2f8f5;border-radius:6px;padding:2px 7px;color:#5a7a63;">${x.ic||'🍽️'} ${x.n}</span>`).join('')}
+        ${items.map(x=>`<span style="font-size:10px;background:#f2f8f5;border-radius:6px;padding:2px 7px;color:#5a7a63;">${x.ic} ${x.n}${x.qty&&x.qty!==1?' x'+x.qty:''}</span>`).join('')}
       </div>
-      <button onclick="event.stopPropagation();deletePreset('${p.id}','${p.name}')" style="align-self:flex-end;padding:4px 10px;background:none;border:1px solid #fca5a5;border-radius:8px;font-size:11px;color:#ef4444;cursor:pointer;font-family:inherit;">刪除</button>
+      <button onclick="event.stopPropagation();deletePreset('${p.id}','${p.name}')" style="align-self:flex-end;padding:4px 10px;background:none;border:1px solid #fca5a5;border-radius:8px;font-size:11px;color:#ef4444;cursor:pointer;font-family:inherit;">🗑️ 刪除</button>
     </div>`;
   }).join('');
 }
@@ -1429,28 +1597,6 @@ async function deletePreset(id,name){
   await sb.from('meal_presets').delete().eq('id',id);
   toast('✓ 已刪除套餐');
   await loadPresets();
-}
-
-// 儲存目前選好的食物為套餐
-async function saveAsPreset(mealIdx){
-  if(!UP)return;
-  // 收集目前已選的所有食物（可指定餐別，或收集全部）
-  let items=[];
-  if(mealIdx!==undefined){
-    items=ML[mealIdx];
-  } else {
-    ML.forEach(m=>items=items.concat(m));
-  }
-  if(!items.length){toast('請先選擇食物再儲存套餐');return;}
-  const name=prompt('為這個套餐命名：');
-  if(!name||!name.trim())return;
-  const {error}=await sb.from('meal_presets').insert({
-    user_id:UP.id,
-    name:name.trim(),
-    items:items.map(x=>({n:x.n,ic:x.ic||'🍽️',c:x.c,p:x.p,cr:x.cr||0,f:x.f||0,qty:x.qty||1,base:x.base}))
-  });
-  if(error){toast('儲存失敗：'+error.message);return;}
-  toast(`✓ 套餐「${name}」已儲存！`);
 }
 
 // ---------------- 儲存與其他邏輯 ----------------
@@ -1978,85 +2124,7 @@ function showMemberDayDetail(l){
 
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
 init();
-  // --- 🍱 常用餐食組合功能開始 ---
-
-// 1. 儲存組合：把目前輸入框的內容存到資料庫
-async function saveMealCombo() {
-    const mealInput = document.querySelector('textarea'); 
-    const content = mealInput?.value.trim(); 
-    if (!content) { toast('請先在輸入框寫點東西再儲存喔！'); return; }
-
-    const comboName = prompt("請為這個餐食組合命名（例：超商無腦餐）：");
-    if (!comboName) return;
-
-    const { error } = await sb.from('user_meal_combos').insert({ 
-        user_id: CU.id, 
-        combo_name: comboName, 
-        content: content 
-    });
-
-    if (error) { toast('儲存失敗，請確認有跑 SQL 建立資料表'); return; }
-    toast('✓ 已儲存到我的最愛！');
-    await loadMyCombos(); 
-}
-
-// 2. 載入組合：從資料庫抓取該使用者的所有組合
-async function loadMyCombos() {
-    const sel = document.getElementById('combo-select');
-    if(!sel) return;
-
-    const { data, error } = await sb.from('user_meal_combos')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error || !data || data.length === 0) {
-        sel.innerHTML = '<option value="">(尚未儲存組合)</option>';
-        return;
-    }
-
-    let html = '<option value="">✨ 選擇我的常用組合...</option>';
-    data.forEach(c => { html += `<option value="${c.content}">${c.combo_name}</option>`; });
-    sel.innerHTML = html;
-}
-
-// 3. 套用組合：選了選單後，自動把字填進輸入框
-function applyCombo() {
-    const sel = document.getElementById('combo-select');
-    const mealInput = document.querySelector('textarea'); 
-    if(sel.value && mealInput) {
-        mealInput.value = sel.value; 
-        toast('✓ 已帶入內容！');
-        sel.value = ""; 
-    }
-}
-
-// 4. 自動外掛：在網頁畫面上自動插進下拉選單
-function injectMealHelper() {
-    const labels = Array.from(document.querySelectorAll('label'));
-    const targetLabel = labels.find(el => el.textContent.includes('今日餐食'));
-
-    if (!targetLabel || document.getElementById('combo-select')) return;
-
-    const div = document.createElement('div');
-    div.innerHTML = `
-        <div style="background:#f0f7f3; padding:10px; border-radius:10px; margin:8px 0; border:1px solid #e0ebe5;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <span style="font-size:12px; font-weight:700; color:#5a7a63;">✨ 快速帶入</span>
-                <button type="button" onclick="saveMealCombo()" style="background:#0d2b1a; color:#fff; border:none; border-radius:6px; padding:4px 8px; font-size:11px; cursor:pointer;">存為我的最愛</button>
-            </div>
-            <select id="combo-select" onchange="applyCombo()" style="width:100%; padding:8px; border:1.5px solid #e0ebe5; border-radius:8px; font-size:13px; color:#0d2b1a; background:white;">
-                <option value="">載入中...</option>
-            </select>
-        </div>
-    `;
-    targetLabel.parentNode.insertBefore(div, targetLabel.nextSibling);
-    loadMyCombos();
-}
-
-// 5. 確保網頁讀取完後啟動
-setTimeout(injectMealHelper, 2000); 
-
-// --- 🍱 常用餐食組合功能結束 ---
+// 舊版餐食組合功能已由套餐功能取代
 </script>
 </body>
 </html>
