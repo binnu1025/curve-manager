@@ -340,11 +340,16 @@ async function addTeam(){
 }
 
 async function deleteTeam(id,name){
-  if(!confirm('確定刪除「'+name+'」？'))return;
-  const {error}=await sb.from('teams').delete().eq('id',id);
-  if(error){showToast('刪除失敗');return;}
-  showToast('✓ 已刪除 '+name);
-  await loadTeams();
+  showConfirm(
+    `🗑️ 刪除白金`,
+    `確定要刪除「${name}」嗎？`,
+    async()=>{
+      const {error}=await sb.from('teams').delete().eq('id',id);
+      if(error){showToast('刪除失敗');return;}
+      showToast('✓ 已刪除 '+name);
+      await loadTeams();
+    }
+  );
 }
 
 async function init(){
@@ -429,11 +434,18 @@ async function loadUsers(){
 
 // 設定/取消組長
 async function deleteUser(uid, name){
-  if(!confirm(`確定要刪除「${name}」嗎？\n\n此操作將清除該學員的所有資料（飲食記錄、量測數據等），無法復原！`)) return;
-  const {error} = await sb.from('users').delete().eq('id', uid);
-  if(error){showToast('❌ 刪除失敗：'+error.message);return;}
-  showToast(`✓ 已刪除 ${name} 的所有資料`);
-  await loadUsers();
+  showConfirm(
+    `🗑️ 刪除學員`,
+    `確定要刪除「${name}」嗎？<br><br>此操作將清除該學員的所有資料（飲食記錄、量測數據等），<strong>無法復原！</strong>`,
+    async()=>{
+      const {error} = await sb.from('users').delete().eq('id', uid);
+      if(error){showToast('❌ 刪除失敗：'+error.message);return;}
+      showToast(`✓ 已刪除 ${name} 的所有資料`);
+      await loadUsers();
+    },
+    '確定刪除',
+    '#ef4444'
+  );
 }
 
 async function toggleLeader(uid,name,isLeader){
@@ -530,10 +542,10 @@ function renderUserList(users){
         ${isApproved?`
           <button class="btn btn-outline btn-sm" onclick="openMoveGroup('${u.id}','${u.name}')">換組</button>
           <button class="btn btn-outline btn-sm" onclick="toggleLeader('${u.id}','${u.name}',${!!u.is_leader})">${u.is_leader?'取消組長':'設組長'}</button>
-          <button class="btn btn-red btn-sm" onclick="deleteUser('${u.id}','${u.name}')">🗑️</button>
+          <button class="btn btn-red btn-sm" onclick="deleteUser('${u.id}','${u.name}')" style="padding:5px 11px;">🗑️ 刪除</button>
         `:''}
         ${u.status==='rejected'?`
-          <button class="btn btn-red btn-sm" onclick="deleteUser('${u.id}','${u.name}')">🗑️</button>
+          <button class="btn btn-red btn-sm" onclick="deleteUser('${u.id}','${u.name}')" style="padding:5px 11px;">🗑️ 刪除</button>
         `:''}
       </div>
     </div>`;
@@ -892,6 +904,29 @@ function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function showConfirm(title, msg, onConfirm, confirmText='確定刪除', confirmColor='#ef4444'){
+  document.getElementById('confirm-ov')?.remove();
+  const ov=document.createElement('div');
+  ov.id='confirm-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:600;display:flex;align-items:center;justify-content:center;padding:24px;';
+  ov.innerHTML=`
+    <div style="background:#fff;border-radius:20px;padding:24px;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.15);">
+      <div style="font-size:16px;font-weight:700;color:#0d2b1a;margin-bottom:8px;">${title}</div>
+      <div style="font-size:13px;color:#5a7a63;line-height:1.6;margin-bottom:20px;">${msg}</div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="document.getElementById('confirm-ov').remove();"
+          style="flex:1;padding:13px;background:#fff;border:1.5px solid #e0ebe5;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#5a7a63;">取消</button>
+        <button id="confirm-ok-btn"
+          style="flex:1;padding:13px;background:${confirmColor};border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;color:#fff;">${confirmText}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  document.getElementById('confirm-ok-btn').onclick=()=>{
+    document.getElementById('confirm-ov').remove();
+    onConfirm();
+  };
 }
 
 init();
