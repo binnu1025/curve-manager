@@ -756,6 +756,17 @@ async function init(){
     if(!session){sv('login');return;}
     if(UP){loadToday();updGoals();}
   }, 5*60*1000);
+
+  // 畫面重新顯示時（從其他 App 切回來）自動刷新
+  document.addEventListener('visibilitychange', async()=>{
+    if(document.visibilityState==='visible'&&UP){
+      const {data:{session}}=await sb.auth.getSession();
+      if(!session){sv('login');return;}
+      loadToday();
+      loadStreak();
+      updGoals();
+    }
+  });
 }
 async function hs(u){
   CU=u;
@@ -1608,7 +1619,10 @@ function cfPreset(){
   const preset=MY_PRESETS[PS];
   const items=preset.items||[];
   
-  // 顯示選擇餐別的彈窗
+  // 存到全域，避免 JSON.stringify 在 onclick 字串裡斷掉
+  window._presetItems = items;
+  window._presetName = preset.name;
+  
   const MN_ICONS=['🌅','☀️','🌙','🍎'];
   const ov=document.createElement('div');
   ov.id='meal-sel-ov';
@@ -1619,21 +1633,29 @@ function cfPreset(){
       <div style="font-size:12px;color:#5a7a63;text-align:center;margin-bottom:16px;">${items.length}樣食物 · ${Math.round(items.reduce((s,x)=>s+x.c,0))}大卡</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
         ${MN.map((name,i)=>`
-          <button onclick="
-            ML[${i}]=[...ML[${i}],...${JSON.stringify(items)}];
-            document.getElementById('meal-sel-ov').remove();
-            closeMo();
-            for(let j=0;j<4;j++)rMeal(j);
-            toast('✓ 已帶入${preset.name}到${MN_ICONS[i]}'+MN[${i}]);
-            PS=null;
-          " style="padding:16px;background:#f2f8f5;border:1.5px solid #e0ebe5;border-radius:14px;font-size:15px;font-weight:700;color:#0d2b1a;cursor:pointer;font-family:inherit;">
+          <button onclick="applyPresetToMeal(${i})"
+            style="padding:16px;background:#f2f8f5;border:1.5px solid #e0ebe5;border-radius:14px;font-size:15px;font-weight:700;color:#0d2b1a;cursor:pointer;font-family:inherit;">
             ${MN_ICONS[i]} ${name}
           </button>`).join('')}
       </div>
-      <button onclick="document.getElementById('meal-sel-ov').remove();" 
+      <button onclick="document.getElementById('meal-sel-ov').remove();"
         style="width:100%;padding:13px;background:#fff;border:1.5px solid #e0ebe5;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;color:#5a7a63;">取消</button>
     </div>`;
   document.body.appendChild(ov);
+}
+
+function applyPresetToMeal(mealIdx){
+  const items = window._presetItems || [];
+  const name = window._presetName || '';
+  const MN_ICONS=['🌅','☀️','🌙','🍎'];
+  items.forEach(x => ML[mealIdx].push({...x}));
+  document.getElementById('meal-sel-ov')?.remove();
+  closeMo();
+  for(let j=0;j<4;j++) rMeal(j);
+  toast('✓ 已帶入「'+name+'」到 '+MN_ICONS[mealIdx]+MN[mealIdx]);
+  PS=null;
+  window._presetItems=null;
+  window._presetName=null;
 }
 
 async function deletePreset(id,name){
